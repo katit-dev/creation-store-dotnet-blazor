@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using CreationStore.API.Data;
+using CreationStore.API.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 //using CreationStore.API.Models;
 
@@ -12,14 +13,37 @@ namespace CreationStore.API.Controllers
     [ApiController]
     public class ProductsController : ControllerBase
     {
-        private readonly CreationStoreDbContext _context;
+        private readonly IProductService _productService;
 
-        public ProductsController(CreationStoreDbContext context)
+        public ProductsController(IProductService productService)
         {
-            _context = context;
+            _productService = productService;
         }
         
-        
+         [HttpGet]
+        public async Task<IActionResult> GetAllProducts()
+        {
+            var products = await _productService.GetAllProductsAsync();
+
+            return Ok(products);
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetProductById(int id)
+        {
+            var product = await _productService.GetProductByIdAsync(id);
+
+            if (product == null)
+            {
+                return NotFound(new
+                {
+                    IsSuccess = false,
+                    Message = "Product not found"
+                });
+            }
+
+            return Ok(product);
+        }
 
     }
 }

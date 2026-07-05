@@ -1,4 +1,6 @@
 using CreationStore.API.Data;
+using CreationStore.API.Services.Implementations;
+using CreationStore.API.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 
@@ -55,7 +57,11 @@ builder.Services.AddCors(options =>
 // ==========================
 builder.Services.AddAuthorization();
 
+// DI Services
+builder.Services.AddScoped<IProductService, ProductService>();
+
 var app = builder.Build();
+
 
 // ==========================
 // Swagger Middleware
