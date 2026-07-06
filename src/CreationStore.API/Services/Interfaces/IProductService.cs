@@ -9,7 +9,7 @@ namespace CreationStore.API.Services.Interfaces
 
         Task<ProductResponseDTO?> GetProductByIdAsync(int id);
 
-        Task<List<ProductResponseDTO>> GetProductsByCategoryAsync(int categoryId);
+        Task<List<ProductResponseDTO>?> GetProductsByCategoryAsync(int categoryId);
 
         Task<List<ProductResponseDTO>> SearchProductsAsync(string keyword);
 

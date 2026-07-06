@@ -66,8 +66,18 @@ namespace CreationStore.API.Services.Implementations
         }
 
         // Lọc sản phẩm theo category
-        public async Task<List<ProductResponseDTO>> GetProductsByCategoryAsync(int categoryId)
+        public async Task<List<ProductResponseDTO>?> GetProductsByCategoryAsync(int categoryId)
         {
+            // kiem tra xem categoryId co ton tai va active hay khong
+            var categoryExists = await _context.Categories
+        .AsNoTracking()
+        .AnyAsync(c => c.CategoryId == categoryId && c.IsActive);
+
+            if (!categoryExists)
+            {
+                return null;
+            }
+
             var products = await _context.Products
                     .AsNoTracking()
                     .Where(p => p.CategoryId == categoryId && p.IsActive)
@@ -228,7 +238,7 @@ namespace CreationStore.API.Services.Implementations
 
         // Xóa mềm sản phẩm
         // Không xóa khỏi database, chỉ set IsActive = false
-         public async Task<bool> DeleteProductAsync(int id)
+        public async Task<bool> DeleteProductAsync(int id)
         {
             var product = await _context.Products
                 .FirstOrDefaultAsync(p => p.ProductId == id && p.IsActive);
@@ -245,6 +255,6 @@ namespace CreationStore.API.Services.Implementations
 
             return true;
         }
-      
+
     }
 }
