@@ -1,5 +1,6 @@
 using CreationStore.API.Data;
 using CreationStore.API.DTOs.Products;
+using CreationStore.API.Models;
 using CreationStore.API.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
@@ -108,7 +109,7 @@ namespace CreationStore.API.Services.Implementations
         }
 
         // Lọc nâng cao: category, keyword, minPrice, maxPrice
-        public async Task<List<ProductResponseDTO>> FilterProductsAync(
+        public async Task<List<ProductResponseDTO>> FilterProductsAsync(
             int? categoryId,
             string? keyword,
             decimal? minPrice,
@@ -244,6 +245,6 @@ namespace CreationStore.API.Services.Implementations
 
             return true;
         }
-
+      
     }
 }
