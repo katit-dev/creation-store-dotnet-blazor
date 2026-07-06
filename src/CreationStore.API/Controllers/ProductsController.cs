@@ -61,6 +61,15 @@ namespace CreationStore.API.Controllers
         {
             var products = await _productService.GetProductsByCategoryAsync(categoryId);
 
+            if (products == null)
+            {
+                return NotFound(new
+                {
+                    IsSuccess = false,
+                    Message = "Category not found"
+                });
+            }
+
             return Ok(products);
         }
 
@@ -108,7 +117,7 @@ namespace CreationStore.API.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateProduct([FromBody] ProductCreateDTO dto)
         {
-            if(dto.Price < 0)
+            if (dto.Price < 0)
             {
                 return BadRequest(new
                 {
@@ -117,7 +126,7 @@ namespace CreationStore.API.Controllers
                 });
             }
 
-             if (dto.ValidityDays.HasValue && dto.ValidityDays < 0)
+            if (dto.ValidityDays.HasValue && dto.ValidityDays < 0)
             {
                 return BadRequest(new
                 {
@@ -128,7 +137,7 @@ namespace CreationStore.API.Controllers
 
             var product = await _productService.CreateProductAsync(dto);
 
-            if(product == null)
+            if (product == null)
             {
                 return BadRequest(new
                 {
@@ -180,7 +189,7 @@ namespace CreationStore.API.Controllers
         }
 
         // Xóa sản phẩm (soft delete)
-         [HttpDelete("{id:int}")]
+        [HttpDelete("{id:int}")]
         public async Task<IActionResult> DeleteProduct(int id)
         {
             var result = await _productService.DeleteProductAsync(id);
