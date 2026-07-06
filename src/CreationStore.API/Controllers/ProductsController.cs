@@ -117,12 +117,21 @@ namespace CreationStore.API.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateProduct([FromBody] ProductCreateDTO dto)
         {
+            if (string.IsNullOrWhiteSpace(dto.ProductName))
+            {
+                return BadRequest(new
+                {
+                    IsSuccess = false,
+                    Message = "Product name is required"
+                });
+            }
+
             if (dto.Price < 0)
             {
                 return BadRequest(new
                 {
                     IsSuccess = false,
-                    Message = "Price cannot be negative"
+                    Message = "Price must be greater than or equal to 0"
                 });
             }
 
@@ -132,6 +141,15 @@ namespace CreationStore.API.Controllers
                 {
                     IsSuccess = false,
                     Message = "Validity days must be greater than or equal to 0"
+                });
+            }
+
+            if (dto.CategoryId <= 0)
+            {
+                return BadRequest(new
+                {
+                    IsSuccess = false,
+                    Message = "CategoryId is invalid"
                 });
             }
 
@@ -156,6 +174,15 @@ namespace CreationStore.API.Controllers
         [HttpPut("{id:int}")]
         public async Task<IActionResult> UpdateProduct(int id, [FromBody] ProductUpdateDTO dto)
         {
+            if (string.IsNullOrWhiteSpace(dto.ProductName))
+            {
+                return BadRequest(new
+                {
+                    IsSuccess = false,
+                    Message = "Product name is required"
+                });
+            }
+
             if (dto.Price < 0)
             {
                 return BadRequest(new
@@ -171,6 +198,15 @@ namespace CreationStore.API.Controllers
                 {
                     IsSuccess = false,
                     Message = "Validity days must be greater than or equal to 0"
+                });
+            }
+
+            if (dto.CategoryId <= 0)
+            {
+                return BadRequest(new
+                {
+                    IsSuccess = false,
+                    Message = "CategoryId is invalid"
                 });
             }
 
