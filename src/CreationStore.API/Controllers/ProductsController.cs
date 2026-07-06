@@ -77,7 +77,7 @@ namespace CreationStore.API.Controllers
         [HttpGet("filter")]
         public async Task<IActionResult> FilterProducts(
             [FromQuery] int? categoryId,
-            [FromQuery] string keyword,
+            [FromQuery] string? keyword,
             [FromQuery] decimal? minPrice,
             [FromQuery] decimal? maxPrice)
         {
