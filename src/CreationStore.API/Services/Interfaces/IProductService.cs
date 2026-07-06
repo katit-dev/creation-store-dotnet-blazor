@@ -11,7 +11,7 @@ namespace CreationStore.API.Services.Interfaces
 
         Task<List<ProductResponseDTO>?> GetProductsByCategoryAsync(int categoryId);
 
-        Task<List<ProductResponseDTO>> SearchProductsAsync(string keyword);
+        Task<List<ProductResponseDTO>> SearchProductsAsync(string? keyword);
 
         Task<List<ProductResponseDTO>> FilterProductsAsync(
             int? categoryId,

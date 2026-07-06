@@ -97,24 +97,33 @@ namespace CreationStore.API.Services.Implementations
         }
 
         // Tìm kiếm sản phẩm theo tên
-        public async Task<List<ProductResponseDTO>> SearchProductsAsync(string keyword)
+        public async Task<List<ProductResponseDTO>> SearchProductsAsync(string? keyword)
         {
-            keyword = keyword.Trim();
-            var products = await _context.Products
-                    .AsNoTracking()
-                    .Where(p => p.IsActive && p.ProductName.Contains(keyword))
-                    .Select(p => new ProductResponseDTO
-                    {
-                        ProductId = p.ProductId,
-                        ProductName = p.ProductName,
-                        Description = p.Description,
-                        Price = p.Price,
-                        ImageUrl = p.ImageUrl,
-                        ValidityDays = p.ValidityDays,
-                        CategoryId = p.CategoryId,
-                        CategoryName = p.Category.CategoryName
-                    })
-                    .ToListAsync();
+            var query = _context.Products
+                .AsNoTracking()
+                .Where(p => p.IsActive);
+
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {
+                keyword = keyword.Trim();
+
+                query = query.Where(p => p.ProductName.Contains(keyword));
+            }
+
+            var products = await query
+                .Select(p => new ProductResponseDTO
+                {
+                    ProductId = p.ProductId,
+                    ProductName = p.ProductName,
+                    Description = p.Description,
+                    Price = p.Price,
+                    ImageUrl = p.ImageUrl,
+                    ValidityDays = p.ValidityDays,
+                    CategoryId = p.CategoryId,
+                    CategoryName = p.Category.CategoryName
+                })
+                .ToListAsync();
+
             return products;
         }
 

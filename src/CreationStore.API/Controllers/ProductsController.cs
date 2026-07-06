@@ -66,17 +66,8 @@ namespace CreationStore.API.Controllers
 
         // Tìm kiếm sản phẩm theo tên
         [HttpGet("search")]
-        public async Task<IActionResult> SearchProducts([FromQueryAttribute] string keyword)
+        public async Task<IActionResult> SearchProducts([FromQuery] string? keyword)
         {
-            if(string.IsNullOrWhiteSpace(keyword))
-            {
-                return BadRequest(new
-                {
-                    IsSuccess = false,
-                    Message = "Keyword is required"
-                });
-            }
-
             var products = await _productService.SearchProductsAsync(keyword);
 
             return Ok(products);
