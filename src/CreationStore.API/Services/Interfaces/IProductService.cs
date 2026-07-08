@@ -6,7 +6,7 @@ namespace CreationStore.API.Services.Interfaces
 {
     public interface IProductService
     {
-        // PUBLIC / MEMBER
+        // MEMBER
         Task<ResponseTypeDTO<List<ProductResponseDTO>>> GetAllProductsAsync();
 
         Task<ResponseTypeDTO<ProductResponseDTO>> GetProductByIdAsync(int id);
