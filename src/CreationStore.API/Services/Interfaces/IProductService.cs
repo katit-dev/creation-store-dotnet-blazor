@@ -1,19 +1,21 @@
+using CreationStore.API.DTOs;
 using CreationStore.API.DTOs.Products;
+using CreationStore.API.DTOs.ResponseTypes;
 
 namespace CreationStore.API.Services.Interfaces
 {
     public interface IProductService
     {
         // PUBLIC / MEMBER
-        Task<List<ProductResponseDTO>> GetAllProductsAsync();
+        Task<ResponseTypeDTO<List<ProductResponseDTO>>> GetAllProductsAsync();
 
-        Task<ProductResponseDTO?> GetProductByIdAsync(int id);
+        Task<ResponseTypeDTO<ProductResponseDTO>> GetProductByIdAsync(int id);
 
-        Task<List<ProductResponseDTO>?> GetProductsByCategoryAsync(int categoryId);
+        Task<ResponseTypeDTO<List<ProductResponseDTO>>> GetProductsByCategoryAsync(int categoryId);
 
-        Task<List<ProductResponseDTO>> SearchProductsAsync(string? keyword);
+        Task<ResponseTypeDTO<List<ProductResponseDTO>>> SearchProductsAsync(string? keyword);
 
-        Task<List<ProductResponseDTO>> FilterProductsAsync(
+        Task<ResponseTypeDTO<List<ProductResponseDTO>>> FilterProductsAsync(
             int? categoryId,
             string? keyword,
             decimal? minPrice,
@@ -21,10 +23,10 @@ namespace CreationStore.API.Services.Interfaces
         );
 
         // ADMIN
-        Task<ProductResponseDTO?> CreateProductAsync(ProductCreateDTO dto);
+        Task<ResponseTypeDTO<ProductResponseDTO>> CreateProductAsync(ProductCreateDTO dto);
 
-        Task<ProductResponseDTO?> UpdateProductAsync(int id, ProductUpdateDTO dto);
+        Task<ResponseTypeDTO<ProductResponseDTO>> UpdateProductAsync(int id, ProductUpdateDTO dto);
 
-        Task<bool> DeleteProductAsync(int id);
+        Task<ResponseTypeDTO<bool>> DeleteProductAsync(int id);
     }
 }
