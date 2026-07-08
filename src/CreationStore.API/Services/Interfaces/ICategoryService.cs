@@ -1,21 +1,31 @@
-
-using CreationStore.API.DTOs.Categories;
+using CreationStore.API.DTOs.Products;
 using CreationStore.API.DTOs.ResponseTypes;
 
 namespace CreationStore.API.Services.Interfaces
 {
-    public interface ICategoryService
+    public interface IProductService
     {
-        // PUBLIC / MEMBER
-        Task<ResponseTypeDTO<List<CategoryResponseDTO>>> GetAllCategoriesAsync();
+        // MEMBER
+        Task<ResponseTypeDTO<List<ProductResponseDTO>>> GetAllProductsAsync();
 
-        Task<ResponseTypeDTO<CategoryResponseDTO>> GetCategoryByIdAsync(int id);
+        Task<ResponseTypeDTO<ProductResponseDTO>> GetProductByIdAsync(int id);
+
+        Task<ResponseTypeDTO<List<ProductResponseDTO>>> GetProductsByCategoryAsync(int categoryId);
+
+        Task<ResponseTypeDTO<List<ProductResponseDTO>>> SearchProductsAsync(string? keyword);
+
+        Task<ResponseTypeDTO<List<ProductResponseDTO>>> FilterProductsAsync(
+            int? categoryId,
+            string? keyword,
+            decimal? minPrice,
+            decimal? maxPrice
+        );
 
         // ADMIN
-        Task<ResponseTypeDTO<CategoryResponseDTO>> CreateCategoryAsync(CategoryCreateDTO dto);
+        Task<ResponseTypeDTO<ProductResponseDTO>> CreateProductAsync(ProductCreateDTO dto);
 
-        Task<ResponseTypeDTO<CategoryResponseDTO>> UpdateCategoryAsync(int id, CategoryUpdateDTO dto);
+        Task<ResponseTypeDTO<ProductResponseDTO>> UpdateProductAsync(int id, ProductUpdateDTO dto);
 
-        Task<ResponseTypeDTO<bool>> DeleteCategoryAsync(int id);
+        Task<ResponseTypeDTO<bool>> DeleteProductAsync(int id);
     }
 }
