@@ -1,5 +1,6 @@
 using CreationStore.API.Data;
 using CreationStore.API.DTOs.Categories;
+using CreationStore.API.DTOs.ResponseTypes;
 using CreationStore.API.Models;
 using CreationStore.API.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -18,27 +19,31 @@ namespace CreationStore.API.Services.Implementations
         // ==========================
         // MEMBER
         // ==========================
-
-        // Lấy tất cả category đang active
-        public async Task<List<CategoryResponseDTO>> GetAllCategoriesAsync()
+        public async Task<ResponseTypeDTO<List<CategoryResponseDTO>>> GetAllCategoriesAsync()
         {
             var categories = await _context.Categories
-                    .AsNoTracking()
-                    .Where(p => p.IsActive)
-                    .Select(p => new CategoryResponseDTO
-                    {
-                        CategoryId = p.CategoryId,
-                        CategoryName = p.CategoryName,
-                        Description = p.Description,
-                        IsActive = p.IsActive,
-                        CreatedAt = p.CreatedAt
-                    })
-                    .ToListAsync();
-            return categories;
+                .AsNoTracking()
+                .Where(c => c.IsActive)
+                .Select(c => new CategoryResponseDTO
+                {
+                    CategoryId = c.CategoryId,
+                    CategoryName = c.CategoryName,
+                    Description = c.Description,
+                    IsActive = c.IsActive,
+                    CreatedAt = c.CreatedAt
+                })
+                .ToListAsync();
+
+            return new ResponseTypeDTO<List<CategoryResponseDTO>>
+            {
+                StatusCode = 200,
+                Message = "Get categories successfully",
+                Content = categories,
+                DateTime = System.DateTime.Now
+            };
         }
 
-        // Lấy chi tiết category theo id
-         public async Task<CategoryResponseDTO?> GetCategoryByIdAsync(int id)
+        public async Task<ResponseTypeDTO<CategoryResponseDTO>> GetCategoryByIdAsync(int id)
         {
             var category = await _context.Categories
                 .AsNoTracking()
@@ -53,29 +58,50 @@ namespace CreationStore.API.Services.Implementations
                 })
                 .FirstOrDefaultAsync();
 
-            return category;
+            if (category == null)
+            {
+                return new ResponseTypeDTO<CategoryResponseDTO>
+                {
+                    StatusCode = 404,
+                    Message = "Category not found",
+                    Content = null,
+                    DateTime = System.DateTime.Now
+                };
+            }
+
+            return new ResponseTypeDTO<CategoryResponseDTO>
+            {
+                StatusCode = 200,
+                Message = "Get category successfully",
+                Content = category,
+                DateTime = System.DateTime.Now
+            };
         }
 
         // ==========================
         // ADMIN
         // ==========================
-        // Thêm category mới
-        public async Task<CategoryResponseDTO?> CreateCategoryAsync(CategoryCreateDTO dto)
+        public async Task<ResponseTypeDTO<CategoryResponseDTO>> CreateCategoryAsync(CategoryCreateDTO dto)
         {
             // trim name
             var categoryName = dto.CategoryName.Trim();
 
-            // kiem tra name trong db
-            var categoryExist = await _context.Categories
+            // check if name exists
+            var categoryExists = await _context.Categories
                 .AnyAsync(c => c.CategoryName == categoryName && c.IsActive);
 
-            // neu khong null-> ton tai
-            if(categoryExist)
+            if (categoryExists)
             {
-                return null;
+                return new ResponseTypeDTO<CategoryResponseDTO>
+                {
+                    StatusCode = 400,
+                    Message = "Category name already exists",
+                    Content = null,
+                    DateTime = System.DateTime.Now
+                };
             }
 
-            // neu khong ton tai -> tao moi
+            // create new category
             var category = new Category
             {
                 CategoryName = categoryName,
@@ -84,25 +110,36 @@ namespace CreationStore.API.Services.Implementations
                 CreatedAt = DateTime.Now
             };
 
-            // them vao db va save changes
+            // save to database
             _context.Categories.Add(category);
             await _context.SaveChangesAsync();
 
-            // get by Id va return
-            var result = await GetCategoryByIdAsync(category.CategoryId);
+            // get by id and rerturn response
+            var response = await GetCategoryByIdAsync(category.CategoryId);
 
-            return result;
+            return new ResponseTypeDTO<CategoryResponseDTO>
+            {
+                StatusCode = 200,
+                Message = "Category created successfully",
+                Content = response.Content,
+                DateTime = System.DateTime.Now
+            };
         }
 
-        // Cập nhật category
-        public async Task<CategoryResponseDTO?> UpdateCategoryAsync(int id, CategoryUpdateDTO dto)
+        public async Task<ResponseTypeDTO<CategoryResponseDTO>> UpdateCategoryAsync(int id, CategoryUpdateDTO dto)
         {
             var category = await _context.Categories
                 .FirstOrDefaultAsync(c => c.CategoryId == id && c.IsActive);
 
             if (category == null)
             {
-                return null;
+                return new ResponseTypeDTO<CategoryResponseDTO>
+                {
+                    StatusCode = 404,
+                    Message = "Category not found",
+                    Content = null,
+                    DateTime = System.DateTime.Now
+                };
             }
 
             var categoryName = dto.CategoryName.Trim();
@@ -116,7 +153,13 @@ namespace CreationStore.API.Services.Implementations
 
             if (categoryNameExists)
             {
-                return null;
+                return new ResponseTypeDTO<CategoryResponseDTO>
+                {
+                    StatusCode = 400,
+                    Message = "Category name already exists",
+                    Content = null,
+                    DateTime = System.DateTime.Now
+                };
             }
 
             category.CategoryName = categoryName;
@@ -124,21 +167,31 @@ namespace CreationStore.API.Services.Implementations
 
             await _context.SaveChangesAsync();
 
-            var result = await GetCategoryByIdAsync(category.CategoryId);
+            var response = await GetCategoryByIdAsync(category.CategoryId);
 
-            return result;
+            return new ResponseTypeDTO<CategoryResponseDTO>
+            {
+                StatusCode = 200,
+                Message = "Category updated successfully",
+                Content = response.Content,
+                DateTime = System.DateTime.Now
+            };
         }
 
-        // Xóa mềm category
-        // Không xóa khỏi database, chỉ set IsActive = false
-        public async Task<bool> DeleteCategoryAsync(int id)
+        public async Task<ResponseTypeDTO<bool>> DeleteCategoryAsync(int id)
         {
             var category = await _context.Categories
                 .FirstOrDefaultAsync(c => c.CategoryId == id && c.IsActive);
 
             if (category == null)
             {
-                return false;
+                return new ResponseTypeDTO<bool>
+                {
+                    StatusCode = 404,
+                    Message = "Category not found",
+                    Content = false,
+                    DateTime = System.DateTime.Now
+                };
             }
 
             var hasActiveProducts = await _context.Products
@@ -146,14 +199,26 @@ namespace CreationStore.API.Services.Implementations
 
             if (hasActiveProducts)
             {
-                return false;
+                return new ResponseTypeDTO<bool>
+                {
+                    StatusCode = 400,
+                    Message = "Cannot delete category because it has active products",
+                    Content = false,
+                    DateTime = System.DateTime.Now
+                };
             }
 
             category.IsActive = false;
 
             await _context.SaveChangesAsync();
 
-            return true;
+            return new ResponseTypeDTO<bool>
+            {
+                StatusCode = 200,
+                Message = "Category deleted successfully",
+                Content = true,
+                DateTime = System.DateTime.Now
+            };
         }
     }
 }

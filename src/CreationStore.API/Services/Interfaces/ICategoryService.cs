@@ -1,25 +1,21 @@
+
 using CreationStore.API.DTOs.Categories;
+using CreationStore.API.DTOs.ResponseTypes;
 
 namespace CreationStore.API.Services.Interfaces
 {
     public interface ICategoryService
     {
-        // ==========================
-        // MEMBER
-        // ==========================
+        // PUBLIC / MEMBER
+        Task<ResponseTypeDTO<List<CategoryResponseDTO>>> GetAllCategoriesAsync();
 
-        Task<List<CategoryResponseDTO>> GetAllCategoriesAsync();
+        Task<ResponseTypeDTO<CategoryResponseDTO>> GetCategoryByIdAsync(int id);
 
-        Task<CategoryResponseDTO?> GetCategoryByIdAsync(int id);
-
-        // ==========================
         // ADMIN
-        // ==========================
+        Task<ResponseTypeDTO<CategoryResponseDTO>> CreateCategoryAsync(CategoryCreateDTO dto);
 
-        Task<CategoryResponseDTO?> CreateCategoryAsync(CategoryCreateDTO dto);
+        Task<ResponseTypeDTO<CategoryResponseDTO>> UpdateCategoryAsync(int id, CategoryUpdateDTO dto);
 
-        Task<CategoryResponseDTO?> UpdateCategoryAsync(int id, CategoryUpdateDTO dto);
-
-        Task<bool> DeleteCategoryAsync(int id);
+        Task<ResponseTypeDTO<bool>> DeleteCategoryAsync(int id);
     }
 }

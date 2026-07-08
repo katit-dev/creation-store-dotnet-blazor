@@ -20,6 +20,12 @@ builder.Services.AddDbContext<CreationStoreDbContext>(options =>
 });
 
 // ==========================
+// DI Services
+// ==========================
+builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+
+// ==========================
 // DI Swagger
 // ==========================
 builder.Services.AddSwaggerGen(options =>
@@ -35,7 +41,8 @@ builder.Services.AddSwaggerGen(options =>
 // ==========================
 // DI CORS
 // Cho phép Blazor gọi API
-// Nếu đây là port Blazor của bạn thì giữ nguyên.
+// Nếu 7188/5099 là port của Blazor thì giữ nguyên.
+// Nếu đây là port API thì phải đổi lại theo port Blazor.
 // ==========================
 builder.Services.AddCors(options =>
 {
@@ -53,15 +60,11 @@ builder.Services.AddCors(options =>
 
 // ==========================
 // DI Authorization
-// Chưa làm JWT nên tạm thời chỉ đăng ký Authorization cơ bản
+// Chưa làm JWT nên tạm để Authorization cơ bản
 // ==========================
 builder.Services.AddAuthorization();
 
-// DI Services
-builder.Services.AddScoped<IProductService, ProductService>();
-
 var app = builder.Build();
-
 
 // ==========================
 // Swagger Middleware
@@ -88,8 +91,10 @@ app.UseExceptionHandler(errorApp =>
 
         var result = new
         {
-            IsSuccess = false,
-            Message = "Có lỗi xảy ra trong hệ thống."
+            StatusCode = 500,
+            Message = "Có lỗi xảy ra trong hệ thống.",
+            Content = (object?)null,
+            DateTime = System.DateTime.Now
         };
 
         await context.Response.WriteAsJsonAsync(result);
@@ -98,10 +103,13 @@ app.UseExceptionHandler(errorApp =>
 
 app.UseHttpsRedirection();
 
-// Dùng CORS trước Authorization
+// ==========================
+// CORS Middleware
+// Đặt trước Authorization
+// ==========================
 app.UseCors("AllowBlazorClient");
 
-// Sau này làm JWT thì thêm app.UseAuthentication() ở đây
+// Sau này làm JWT thì thêm ở đây:
 // app.UseAuthentication();
 
 app.UseAuthorization();
