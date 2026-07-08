@@ -5,7 +5,7 @@ namespace CreationStore.API.Services.Interfaces
     public interface ICategoryService
     {
         // ==========================
-        // PUBLIC / MEMBER
+        // MEMBER
         // ==========================
 
         Task<List<CategoryResponseDTO>> GetAllCategoriesAsync();
