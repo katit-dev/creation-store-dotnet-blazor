@@ -1,16 +1,10 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using CreationStore.API.Data;
 using CreationStore.API.DTOs.Products;
 using CreationStore.API.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-//using CreationStore.API.Models;
 
 namespace CreationStore.API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/products")]
     [ApiController]
     public class ProductsController : ControllerBase
     {
@@ -22,229 +16,94 @@ namespace CreationStore.API.Controllers
         }
 
         // ==========================
-        // MEMBER
+        // PUBLIC / MEMBER
         // ==========================
-
         // GET: /api/products
-        // Lấy danh sách sản phẩm đang active
         [HttpGet]
         public async Task<IActionResult> GetAllProducts()
         {
-            var products = await _productService.GetAllProductsAsync();
+            var result = await _productService.GetAllProductsAsync();
 
-            return Ok(products);
+            return StatusCode(result.StatusCode, result);
         }
 
         // GET: /api/products/1
-        // Lấy chi tiết sản phẩm theo id
-        [HttpGet("{id}")]
+        [HttpGet("{id:int}")]
         public async Task<IActionResult> GetProductById(int id)
         {
-            var product = await _productService.GetProductByIdAsync(id);
+            var result = await _productService.GetProductByIdAsync(id);
 
-            if (product == null)
-            {
-                return NotFound(new
-                {
-                    IsSuccess = false,
-                    Message = "Product not found"
-                });
-            }
-
-            return Ok(product);
+            return StatusCode(result.StatusCode, result);
         }
 
         // GET: /api/products/category/1
-        // Lọc sản phẩm theo danh mục
         [HttpGet("category/{categoryId:int}")]
         public async Task<IActionResult> GetProductsByCategory(int categoryId)
         {
-            var products = await _productService.GetProductsByCategoryAsync(categoryId);
+            var result = await _productService.GetProductsByCategoryAsync(categoryId);
 
-            if (products == null)
-            {
-                return NotFound(new
-                {
-                    IsSuccess = false,
-                    Message = "Category not found"
-                });
-            }
-
-            return Ok(products);
+            return StatusCode(result.StatusCode, result);
         }
 
-        // Tìm kiếm sản phẩm theo tên
+        // GET: /api/products/search?keyword=spotify
+        // GET: /api/products/search
         [HttpGet("search")]
         public async Task<IActionResult> SearchProducts([FromQuery] string? keyword)
         {
-            var products = await _productService.SearchProductsAsync(keyword);
+            var result = await _productService.SearchProductsAsync(keyword);
 
-            return Ok(products);
+            return StatusCode(result.StatusCode, result);
         }
 
-        // Lọc nâng cao: category, keyword, minPrice, maxPrice
+        // GET: /api/products/filter?categoryId=1&keyword=spotify&minPrice=100000&maxPrice=500000
+        // GET: /api/products/filter
         [HttpGet("filter")]
         public async Task<IActionResult> FilterProducts(
             [FromQuery] int? categoryId,
             [FromQuery] string? keyword,
             [FromQuery] decimal? minPrice,
-            [FromQuery] decimal? maxPrice)
+            [FromQuery] decimal? maxPrice
+        )
         {
-            if (minPrice.HasValue && maxPrice.HasValue && minPrice > maxPrice)
-            {
-                return BadRequest(new
-                {
-                    IsSuccess = false,
-                    Message = "Min price cannot be greater than max price"
-                });
-            }
-
-            var products = await _productService.FilterProductsAsync(
+            var result = await _productService.FilterProductsAsync(
                 categoryId,
                 keyword,
                 minPrice,
                 maxPrice
             );
 
-            return Ok(products);
+            return StatusCode(result.StatusCode, result);
         }
 
         // ==========================
         // ADMIN
         // ==========================
-
-        // Thêm sản phẩm mới
+        // POST: /api/products
         [HttpPost]
         public async Task<IActionResult> CreateProduct([FromBody] ProductCreateDTO dto)
         {
-            if (string.IsNullOrWhiteSpace(dto.ProductName))
-            {
-                return BadRequest(new
-                {
-                    IsSuccess = false,
-                    Message = "Product name is required"
-                });
-            }
+            var result = await _productService.CreateProductAsync(dto);
 
-            if (dto.Price < 0)
-            {
-                return BadRequest(new
-                {
-                    IsSuccess = false,
-                    Message = "Price must be greater than or equal to 0"
-                });
-            }
-
-            if (dto.ValidityDays.HasValue && dto.ValidityDays < 0)
-            {
-                return BadRequest(new
-                {
-                    IsSuccess = false,
-                    Message = "Validity days must be greater than or equal to 0"
-                });
-            }
-
-            if (dto.CategoryId <= 0)
-            {
-                return BadRequest(new
-                {
-                    IsSuccess = false,
-                    Message = "CategoryId is invalid"
-                });
-            }
-
-            var product = await _productService.CreateProductAsync(dto);
-
-            if (product == null)
-            {
-                return BadRequest(new
-                {
-                    IsSuccess = false,
-                    Message = "Invalid category"
-                });
-            }
-            return CreatedAtAction(
-                nameof(GetProductById),
-                new { id = product.ProductId },
-                product
-            );
+            return StatusCode(result.StatusCode, result);
         }
 
-        // Cập nhật sản phẩm
+        // PUT: /api/products/1
+        // ==========================
         [HttpPut("{id:int}")]
         public async Task<IActionResult> UpdateProduct(int id, [FromBody] ProductUpdateDTO dto)
         {
-            if (string.IsNullOrWhiteSpace(dto.ProductName))
-            {
-                return BadRequest(new
-                {
-                    IsSuccess = false,
-                    Message = "Product name is required"
-                });
-            }
+            var result = await _productService.UpdateProductAsync(id, dto);
 
-            if (dto.Price < 0)
-            {
-                return BadRequest(new
-                {
-                    IsSuccess = false,
-                    Message = "Price must be greater than or equal to 0"
-                });
-            }
-
-            if (dto.ValidityDays.HasValue && dto.ValidityDays < 0)
-            {
-                return BadRequest(new
-                {
-                    IsSuccess = false,
-                    Message = "Validity days must be greater than or equal to 0"
-                });
-            }
-
-            if (dto.CategoryId <= 0)
-            {
-                return BadRequest(new
-                {
-                    IsSuccess = false,
-                    Message = "CategoryId is invalid"
-                });
-            }
-
-            var product = await _productService.UpdateProductAsync(id, dto);
-
-            if (product == null)
-            {
-                return NotFound(new
-                {
-                    IsSuccess = false,
-                    Message = "Product not found or invalid category"
-                });
-            }
-
-            return Ok(product);
+            return StatusCode(result.StatusCode, result);
         }
 
-        // Xóa sản phẩm (soft delete)
+        // DELETE: /api/products/1
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> DeleteProduct(int id)
         {
             var result = await _productService.DeleteProductAsync(id);
 
-            if (!result)
-            {
-                return NotFound(new
-                {
-                    IsSuccess = false,
-                    Message = "Product not found"
-                });
-            }
-
-            return Ok(new
-            {
-                IsSuccess = true,
-                Message = "Product deleted successfully"
-            });
+            return StatusCode(result.StatusCode, result);
         }
-
     }
 }
