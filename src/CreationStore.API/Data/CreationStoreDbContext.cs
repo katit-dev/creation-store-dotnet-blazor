@@ -22,6 +22,8 @@ public partial class CreationStoreDbContext : DbContext
 
     public virtual DbSet<OrderItem> OrderItems { get; set; }
 
+    public virtual DbSet<PaymentTransaction> PaymentTransactions { get; set; }
+
     public virtual DbSet<Product> Products { get; set; }
 
     public virtual DbSet<Role> Roles { get; set; }
@@ -96,10 +98,14 @@ public partial class CreationStoreDbContext : DbContext
             entity.Property(e => e.CancelReason).HasMaxLength(500);
             entity.Property(e => e.Note).HasMaxLength(500);
             entity.Property(e => e.OrderDate).HasDefaultValueSql("(sysdatetime())");
-            entity.Property(e => e.Status)
-                .HasMaxLength(20)
+            entity.Property(e => e.PaymentStatus)
+                .HasMaxLength(30)
                 .IsUnicode(false)
-                .HasDefaultValue("Processing");
+                .HasDefaultValue("Pending", "DF_Orders_PaymentStatus");
+            entity.Property(e => e.Status)
+                .HasMaxLength(30)
+                .IsUnicode(false)
+                .HasDefaultValue("PendingPayment", "DF_Orders_Status");
             entity.Property(e => e.TotalAmount).HasColumnType("decimal(18, 2)");
 
             entity.HasOne(d => d.User).WithMany(p => p.Orders)
@@ -127,6 +133,49 @@ public partial class CreationStoreDbContext : DbContext
                 .HasForeignKey(d => d.ProductId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_OrderItems_Products");
+        });
+
+        modelBuilder.Entity<PaymentTransaction>(entity =>
+        {
+            entity.HasKey(e => e.PaymentTransactionId).HasName("PK__PaymentT__C22AEFE0D456C955");
+
+            entity.HasIndex(e => e.OrderId, "IX_PaymentTransactions_OrderId");
+
+            entity.HasIndex(e => e.VnpTxnRef, "IX_PaymentTransactions_VnpTxnRef").IsUnique();
+
+            entity.Property(e => e.Amount).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysdatetime())", "DF_PaymentTransactions_CreatedAt");
+            entity.Property(e => e.PaymentMethod)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasDefaultValue("VNPAY", "DF_PaymentTransactions_PaymentMethod");
+            entity.Property(e => e.TransactionStatus)
+                .HasMaxLength(30)
+                .IsUnicode(false)
+                .HasDefaultValue("Pending", "DF_PaymentTransactions_TransactionStatus");
+            entity.Property(e => e.VnpBankCode)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.VnpPayDate)
+                .HasMaxLength(20)
+                .IsUnicode(false);
+            entity.Property(e => e.VnpResponseCode)
+                .HasMaxLength(20)
+                .IsUnicode(false);
+            entity.Property(e => e.VnpTransactionNo)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.VnpTransactionStatus)
+                .HasMaxLength(20)
+                .IsUnicode(false);
+            entity.Property(e => e.VnpTxnRef)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+
+            entity.HasOne(d => d.Order).WithMany(p => p.PaymentTransactions)
+                .HasForeignKey(d => d.OrderId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_PaymentTransactions_Orders");
         });
 
         modelBuilder.Entity<Product>(entity =>

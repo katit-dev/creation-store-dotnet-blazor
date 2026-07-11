@@ -21,7 +21,11 @@ public partial class Order
 
     public string? CancelReason { get; set; }
 
+    public string PaymentStatus { get; set; } = null!;
+
     public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+
+    public virtual ICollection<PaymentTransaction> PaymentTransactions { get; set; } = new List<PaymentTransaction>();
 
     public virtual User User { get; set; } = null!;
 }
