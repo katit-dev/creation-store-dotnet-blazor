@@ -1,6 +1,6 @@
 namespace CreationStore.API.DTOs.Auth
 {
-    public class AuthResponseDTO
+    public class UserProfileDTO
     {
         public int UserId { get; set; }
 
@@ -13,9 +13,5 @@ namespace CreationStore.API.DTOs.Auth
         public string? Phone { get; set; }
 
         public List<string> Roles { get; set; } = new();
-
-        public string Token { get; set; } = string.Empty;
-
-        public DateTime ExpiresAt { get; set; }
     }
 }
