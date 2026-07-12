@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using CreationStore.API.Data;
 using CreationStore.API.DTOs.Auth;
 using CreationStore.API.DTOs.ResponseTypes;
@@ -13,14 +14,18 @@ namespace CreationStore.API.Services.Implementations
     {
         private readonly CreationStoreDbContext _context;
         private readonly JwtAuthService _jwtAuthService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+
 
         public AuthService(
             CreationStoreDbContext context,
-            JwtAuthService jwtAuthService
+            JwtAuthService jwtAuthService,
+            IHttpContextAccessor httpContextAccessor
         )
         {
             _context = context;
             _jwtAuthService = jwtAuthService;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<ResponseTypeDTO<RegisterResponseDTO>> RegisterAsync(RegisterDTO dto)
@@ -234,8 +239,24 @@ namespace CreationStore.API.Services.Implementations
             };
         }
 
-        public async Task<ResponseTypeDTO<UserProfileDTO>> GetMeAsync(int userId)
+        public async Task<ResponseTypeDTO<UserProfileDTO>> GetMeAsync()
         {
+            var userIdValue = _httpContextAccessor
+                .HttpContext?
+                .User
+                .FindFirst(ClaimTypes.NameIdentifier)?
+                .Value;
+
+            if (!int.TryParse(userIdValue, out int userId))
+            {
+                return new ResponseTypeDTO<UserProfileDTO>
+                {
+                    StatusCode = 401,
+                    Message = "Invalid token",
+                    Content = null
+                };
+            }
+
             var user = await _context.Users
                 .AsNoTracking()
                 .Include(u => u.UserRoles)

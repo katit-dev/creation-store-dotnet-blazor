@@ -40,6 +40,7 @@ GO
 CREATE TABLE UserRoles (
     UserId INT NOT NULL,
     RoleId INT NOT NULL,
+    Description NVARCHAR(500) NULL,
 
     PRIMARY KEY (UserId, RoleId),
 

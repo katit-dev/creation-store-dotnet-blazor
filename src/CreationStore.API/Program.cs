@@ -24,6 +24,11 @@ builder.Services.AddDbContext<CreationStoreDbContext>(options =>
 // ==========================
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+
+// DI HttpContextAccessor
+// Để lấy thông tin userId từ JWT trong AuthService
+builder.Services.AddHttpContextAccessor();
 
 // ==========================
 // DI Swagger
