@@ -1,9 +1,11 @@
 using System.Text;
 using CreationStore.API.Data;
+using CreationStore.API.DTOs.ResponseTypes;
 using CreationStore.API.Helpers;
 using CreationStore.API.Services.Implementations;
 using CreationStore.API.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
@@ -14,6 +16,27 @@ var builder = WebApplication.CreateBuilder(args);
 // DI Controllers
 // ==========================
 builder.Services.AddControllers();
+
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var errorMessage = context.ModelState
+            .Where(x => x.Value != null && x.Value.Errors.Count > 0)
+            .SelectMany(x => x.Value!.Errors)
+            .Select(x => x.ErrorMessage)
+            .FirstOrDefault();
+
+        var response = new ResponseTypeDTO<object>
+        {
+            StatusCode = 400,
+            Message = errorMessage ?? "Invalid request data",
+            Content = null
+        };
+
+        return new BadRequestObjectResult(response);
+    };
+});
 
 // ==========================
 // DI DbContext
