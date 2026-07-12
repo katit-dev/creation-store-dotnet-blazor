@@ -1,7 +1,11 @@
+using System.Text;
 using CreationStore.API.Data;
+using CreationStore.API.Helpers;
 using CreationStore.API.Services.Implementations;
 using CreationStore.API.Services.Interfaces;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -26,6 +30,9 @@ builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
+// JwtAuthService dùng để tạo JWT token
+builder.Services.AddScoped<JwtAuthService>();
+
 // DI HttpContextAccessor
 // Để lấy thông tin userId từ JWT trong AuthService
 builder.Services.AddHttpContextAccessor();
@@ -40,6 +47,26 @@ builder.Services.AddSwaggerGen(options =>
         Title = "Creation Store API",
         Version = "v1",
         Description = "API documentation for Creation Store project"
+    });
+
+    // Khai báo Bearer token cho Swagger
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Nhập JWT token. Ví dụ: Bearer eyJhbGciOi..."
+    });
+
+    // Áp dụng Bearer token cho các API có Authorize
+    options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecuritySchemeReference("Bearer", document),
+            new List<string>()
+        }
     });
 });
 
@@ -62,6 +89,53 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod();
     });
 });
+
+
+// ==========================
+// DI Authentication - JWT
+// ==========================
+var jwtKey = builder.Configuration["Jwt:Key"];
+var issuer = builder.Configuration["Jwt:Issuer"];
+var audience = builder.Configuration["Jwt:Audience"];
+
+if (string.IsNullOrWhiteSpace(jwtKey))
+{
+    throw new Exception("JWT Key is missing");
+}
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        // Kiểm tra token có đúng nơi phát hành không
+        ValidateIssuer = true,
+
+        // Kiểm tra token có đúng client nhận không
+        ValidateAudience = true,
+
+        // Kiểm tra token còn hạn không
+        ValidateLifetime = true,
+
+        // Kiểm tra chữ ký token có đúng secret key không
+        ValidateIssuerSigningKey = true,
+
+        ValidIssuer = issuer,
+        ValidAudience = audience,
+
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(jwtKey)
+        ),
+
+        // Không cộng thêm thời gian trễ khi token hết hạn
+        ClockSkew = TimeSpan.Zero
+    };
+});
+
 
 // ==========================
 // DI Authorization
@@ -117,6 +191,7 @@ app.UseCors("AllowBlazorClient");
 // Sau này làm JWT thì thêm ở đây:
 // app.UseAuthentication();
 
+app.UseAuthentication(); // Thêm middleware xác thực JWT trước Authorization
 app.UseAuthorization();
 
 app.MapControllers();
