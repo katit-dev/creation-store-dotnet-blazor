@@ -147,3 +147,13 @@ SELECT * FROM Categories;
 
  -- get all products
 SELECT * FROM Products;
+
+
+-- cleanup test data
+DELETE ur
+FROM UserRoles ur
+INNER JOIN Users u ON ur.UserId = u.UserId
+WHERE u.Username LIKE 'testauth%';
+
+DELETE FROM Users
+WHERE Username LIKE 'testauth%';
