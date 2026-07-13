@@ -130,3 +130,20 @@ VALUES
  N'Access to Grok AI for 1 month',
  800000, 1, '/images/Grok.jpg', 30, 4);
 GO
+
+
+Use CreationStoreDb;
+-- get all users
+SELECT * FROM Users;
+
+ -- get all roles
+SELECT * FROM Roles;
+
+ -- get all user roles
+SELECT * FROM UserRoles;
+
+--- get all categories
+SELECT * FROM Categories;
+
+ -- get all products
+SELECT * FROM Products;
