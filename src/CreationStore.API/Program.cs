@@ -221,3 +221,5 @@ app.MapControllers();
 
 app.Run();
 
+public partial class Program { }
+// dong này giúp test project gọi được API project bằng WebApplicationFactory<Program> trong xUnit test project
