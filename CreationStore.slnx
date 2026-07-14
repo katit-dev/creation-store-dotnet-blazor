@@ -3,4 +3,7 @@
     <Project Path="src/CreationStore.API/CreationStore.API.csproj" />
     <Project Path="src/CreationStore.Blazor/CreationStore.Blazor.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/CreationStore.Tests/CreationStore.Tests.csproj" />
+  </Folder>
 </Solution>
