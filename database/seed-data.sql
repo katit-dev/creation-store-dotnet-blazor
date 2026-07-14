@@ -153,7 +153,12 @@ SELECT * FROM Products;
 DELETE ur
 FROM UserRoles ur
 INNER JOIN Users u ON ur.UserId = u.UserId
-WHERE u.Username LIKE 'testauth%';
+WHERE u.Username LIKE 'authtest%';
 
 DELETE FROM Users
-WHERE Username LIKE 'testauth%';
+WHERE Username LIKE 'authtest%';
+
+
+SELECT *
+FROM Users
+WHERE Username LIKE 'authtest%';
