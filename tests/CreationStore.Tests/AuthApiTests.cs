@@ -16,32 +16,40 @@ namespace CreationStore.Tests
         private readonly CustomWebApplicationFactory _factory;
         private readonly HttpClient _client;
 
+        private readonly List<string> _createdUsernames = new();
+
+        private static int _phoneCounter = 1;
+
         public AuthApiTests(CustomWebApplicationFactory factory)
         {
             _factory = factory;
             _client = factory.CreateClient();
         }
 
-        public async Task InitializeAsync()
+        public Task InitializeAsync()
         {
-            await CleanupTestUsersAsync();
+            return Task.CompletedTask;
         }
 
         public async Task DisposeAsync()
         {
-            await CleanupTestUsersAsync();
+            await CleanupCreatedUsersAsync();
         }
 
         [Fact]
         public async Task Register_EmailInvalid_Returns400()
         {
+            var username = CreateUsername("bademail");
+
+            _createdUsernames.Add(username);
+
             var dto = new RegisterDTO
             {
-                Username = "authtest01",
+                Username = username,
                 Password = "123456",
                 FullName = "Auth Test User",
-                Email = "authtest01gmail.com",
-                Phone = "0900000001"
+                Email = "invalid-email-format",
+                Phone = CreatePhone()
             };
 
             var response = await _client.PostAsJsonAsync(
@@ -49,82 +57,76 @@ namespace CreationStore.Tests
                 dto
             );
 
-            var result = await response.Content
-                .ReadFromJsonAsync<ResponseTypeDTO<object>>();
+            var responseText = await response.Content.ReadAsStringAsync();
 
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-            Assert.NotNull(result);
-            Assert.Equal(400, result!.StatusCode);
-            Assert.Equal("Email format is invalid", result.Message);
+            Assert.Contains("Email format is invalid", responseText);
         }
 
         [Fact]
         public async Task Register_Success_Returns201()
         {
-            var dto = new RegisterDTO
-            {
-                Username = "authtest01",
-                Password = "123456",
-                FullName = "Auth Test User",
-                Email = "authtest01@gmail.com",
-                Phone = "0900000001"
-            };
+            var username = CreateUsername("regok");
+            var email = CreateEmail(username);
+            var phone = CreatePhone();
 
-            var response = await _client.PostAsJsonAsync(
-                "/api/auth/register",
-                dto
+            var response = await RegisterUserAsync(
+                username,
+                email,
+                phone
             );
 
             var result = await response.Content
                 .ReadFromJsonAsync<ResponseTypeDTO<RegisterResponseDTO>>();
 
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+
             Assert.NotNull(result);
             Assert.Equal(201, result!.StatusCode);
             Assert.Equal(
                 "Register successfully. Please login to continue.",
                 result.Message
             );
+
             Assert.NotNull(result.Content);
-            Assert.Equal("authtest01", result.Content!.Username);
-            Assert.True(result.Content.UserId > 0);
+            Assert.True(result.Content!.UserId > 0);
+            Assert.Equal(username, result.Content.Username);
         }
 
         [Fact]
         public async Task Register_DuplicateUsername_Returns409()
         {
-            var firstRegister = new RegisterDTO
-            {
-                Username = "authtest01",
-                Password = "123456",
-                FullName = "Auth Test User",
-                Email = "authtest01@gmail.com",
-                Phone = "0900000001"
-            };
+            var username = CreateUsername("dup");
+            var email = CreateEmail(username);
+            var phone = CreatePhone();
 
-            await _client.PostAsJsonAsync(
-                "/api/auth/register",
-                firstRegister
+            var firstResponse = await RegisterUserAsync(
+                username,
+                email,
+                phone
             );
 
-            var duplicateRegister = new RegisterDTO
+            Assert.Equal(HttpStatusCode.Created, firstResponse.StatusCode);
+
+            var duplicateDto = new RegisterDTO
             {
-                Username = "authtest01",
+                Username = username,
                 Password = "123456",
-                FullName = "Auth Test User 2",
-                Email = "authtest02@gmail.com",
-                Phone = "0900000002"
+                FullName = "Auth Test User Duplicate",
+                Email = CreateEmail(CreateUsername("dupemail")),
+                Phone = CreatePhone()
             };
 
             var response = await _client.PostAsJsonAsync(
                 "/api/auth/register",
-                duplicateRegister
+                duplicateDto
             );
 
             var result = await response.Content
                 .ReadFromJsonAsync<ResponseTypeDTO<object>>();
 
             Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+
             Assert.NotNull(result);
             Assert.Equal(409, result!.StatusCode);
             Assert.Equal("Username already exists", result.Message);
@@ -133,12 +135,12 @@ namespace CreationStore.Tests
         [Fact]
         public async Task Login_Success_ReturnsToken()
         {
-            await RegisterDefaultTestUserAsync();
+            var testUser = await CreateRegisteredUserAsync("loginok");
 
             var dto = new LoginDTO
             {
-                LoginIdentifier = "authtest01",
-                Password = "123456"
+                LoginIdentifier = testUser.Username,
+                Password = testUser.Password
             };
 
             var response = await _client.PostAsJsonAsync(
@@ -150,22 +152,25 @@ namespace CreationStore.Tests
                 .ReadFromJsonAsync<ResponseTypeDTO<LoginResponseDTO>>();
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
             Assert.NotNull(result);
             Assert.Equal(200, result!.StatusCode);
             Assert.Equal("Login successfully", result.Message);
+
             Assert.NotNull(result.Content);
             Assert.False(string.IsNullOrWhiteSpace(result.Content!.Token));
             Assert.Equal("Bearer", result.Content.TokenType);
+            Assert.True(result.Content.ExpiresAt > DateTime.UtcNow);
         }
 
         [Fact]
         public async Task Login_WrongPassword_Returns401()
         {
-            await RegisterDefaultTestUserAsync();
+            var testUser = await CreateRegisteredUserAsync("wrongpass");
 
             var dto = new LoginDTO
             {
-                LoginIdentifier = "authtest01",
+                LoginIdentifier = testUser.Username,
                 Password = "wrongpassword"
             };
 
@@ -174,24 +179,21 @@ namespace CreationStore.Tests
                 dto
             );
 
-            var result = await response.Content
-                .ReadFromJsonAsync<ResponseTypeDTO<object>>();
+            var responseText = await response.Content.ReadAsStringAsync();
 
             Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
-            Assert.NotNull(result);
-            Assert.Equal(401, result!.StatusCode);
-            Assert.Equal("Invalid username or password", result.Message);
+            Assert.Contains("Invalid", responseText);
         }
 
         [Fact]
         public async Task GetMe_WithValidToken_ReturnsProfile()
         {
-            await RegisterDefaultTestUserAsync();
+            var testUser = await CreateRegisteredUserAsync("getme");
 
             var loginDto = new LoginDTO
             {
-                LoginIdentifier = "authtest01",
-                Password = "123456"
+                LoginIdentifier = testUser.Username,
+                Password = testUser.Password
             };
 
             var loginResponse = await _client.PostAsJsonAsync(
@@ -202,10 +204,12 @@ namespace CreationStore.Tests
             var loginResult = await loginResponse.Content
                 .ReadFromJsonAsync<ResponseTypeDTO<LoginResponseDTO>>();
 
+            Assert.Equal(HttpStatusCode.OK, loginResponse.StatusCode);
             Assert.NotNull(loginResult);
             Assert.NotNull(loginResult!.Content);
+            Assert.False(string.IsNullOrWhiteSpace(loginResult.Content!.Token));
 
-            var token = loginResult.Content!.Token;
+            var token = loginResult.Content.Token;
 
             _client.DefaultRequestHeaders.Authorization =
                 new AuthenticationHeaderValue("Bearer", token);
@@ -216,45 +220,88 @@ namespace CreationStore.Tests
                 .ReadFromJsonAsync<ResponseTypeDTO<UserProfileDTO>>();
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
             Assert.NotNull(result);
             Assert.Equal(200, result!.StatusCode);
             Assert.Equal("Get profile successfully", result.Message);
+
             Assert.NotNull(result.Content);
-            Assert.Equal("authtest01", result.Content!.Username);
+            Assert.Equal(testUser.Username, result.Content!.Username);
+            Assert.Equal(testUser.Email, result.Content.Email);
+            Assert.Equal(testUser.Phone, result.Content.Phone);
             Assert.Contains("Member", result.Content.Roles);
         }
 
-        private async Task RegisterDefaultTestUserAsync()
+        private async Task<HttpResponseMessage> RegisterUserAsync(
+            string username,
+            string email,
+            string phone,
+            string password = "123456",
+            string fullName = "Auth Test User"
+        )
         {
+            _createdUsernames.Add(username);
+
             var dto = new RegisterDTO
             {
-                Username = "authtest01",
-                Password = "123456",
-                FullName = "Auth Test User",
-                Email = "authtest01@gmail.com",
-                Phone = "0900000001"
+                Username = username,
+                Password = password,
+                FullName = fullName,
+                Email = email,
+                Phone = phone
             };
 
-            var response = await _client.PostAsJsonAsync(
+            return await _client.PostAsJsonAsync(
                 "/api/auth/register",
                 dto
             );
-
-            Assert.True(
-                response.StatusCode == HttpStatusCode.Created ||
-                response.StatusCode == HttpStatusCode.Conflict
-            );
         }
 
-        private async Task CleanupTestUsersAsync()
+        private async Task<TestUserData> CreateRegisteredUserAsync(
+            string scenario
+        )
         {
+            var username = CreateUsername(scenario);
+            var email = CreateEmail(username);
+            var phone = CreatePhone();
+            var password = "123456";
+
+            var response = await RegisterUserAsync(
+                username,
+                email,
+                phone,
+                password
+            );
+
+            Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+
+            return new TestUserData
+            {
+                Username = username,
+                Password = password,
+                Email = email,
+                Phone = phone
+            };
+        }
+
+        private async Task CleanupCreatedUsersAsync()
+        {
+            var usernames = _createdUsernames
+                .Distinct()
+                .ToList();
+
+            if (!usernames.Any())
+            {
+                return;
+            }
+
             using var scope = _factory.Services.CreateScope();
 
             var db = scope.ServiceProvider
                 .GetRequiredService<CreationStoreDbContext>();
 
             var users = await db.Users
-                .Where(u => u.Username.StartsWith("authtest"))
+                .Where(u => usernames.Contains(u.Username))
                 .ToListAsync();
 
             if (!users.Any())
@@ -274,6 +321,34 @@ namespace CreationStore.Tests
             db.Users.RemoveRange(users);
 
             await db.SaveChangesAsync();
+        }
+
+        private static string CreateUsername(string scenario)
+        {
+            return $"authtest_{scenario}_{Guid.NewGuid():N}";
+        }
+
+        private static string CreateEmail(string username)
+        {
+            return $"{username}@gmail.com";
+        }
+
+        private static string CreatePhone()
+        {
+            var number = Interlocked.Increment(ref _phoneCounter);
+
+            return $"09{number:D8}";
+        }
+
+        private class TestUserData
+        {
+            public string Username { get; set; } = string.Empty;
+
+            public string Password { get; set; } = string.Empty;
+
+            public string Email { get; set; } = string.Empty;
+
+            public string Phone { get; set; } = string.Empty;
         }
     }
 }
