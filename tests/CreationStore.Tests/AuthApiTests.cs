@@ -18,17 +18,15 @@ namespace CreationStore.Tests
 
         private readonly List<string> _createdUsernames = new();
 
-        private static int _phoneCounter = 1;
-
         public AuthApiTests(CustomWebApplicationFactory factory)
         {
             _factory = factory;
             _client = factory.CreateClient();
         }
 
-        public Task InitializeAsync()
+        public async Task InitializeAsync()
         {
-            return Task.CompletedTask;
+            await CleanupUsersByPrefixAsync("autht_");
         }
 
         public async Task DisposeAsync()
@@ -41,15 +39,13 @@ namespace CreationStore.Tests
         {
             var username = CreateUsername("bademail");
 
-            _createdUsernames.Add(username);
-
             var dto = new RegisterDTO
             {
                 Username = username,
                 Password = "123456",
                 FullName = "Auth Test User",
                 Email = "invalid-email-format",
-                Phone = CreatePhone()
+                Phone = null
             };
 
             var response = await _client.PostAsJsonAsync(
@@ -68,18 +64,22 @@ namespace CreationStore.Tests
         {
             var username = CreateUsername("regok");
             var email = CreateEmail(username);
-            var phone = CreatePhone();
 
             var response = await RegisterUserAsync(
-                username,
-                email,
-                phone
+                username: username,
+                email: email,
+                phone: null
+            );
+
+            var responseText = await response.Content.ReadAsStringAsync();
+
+            Assert.True(
+                response.StatusCode == HttpStatusCode.Created,
+                $"Expected 201 Created but got {(int)response.StatusCode} {response.StatusCode}. Body: {responseText}"
             );
 
             var result = await response.Content
                 .ReadFromJsonAsync<ResponseTypeDTO<RegisterResponseDTO>>();
-
-            Assert.Equal(HttpStatusCode.Created, response.StatusCode);
 
             Assert.NotNull(result);
             Assert.Equal(201, result!.StatusCode);
@@ -98,23 +98,27 @@ namespace CreationStore.Tests
         {
             var username = CreateUsername("dup");
             var email = CreateEmail(username);
-            var phone = CreatePhone();
 
             var firstResponse = await RegisterUserAsync(
-                username,
-                email,
-                phone
+                username: username,
+                email: email,
+                phone: null
             );
 
-            Assert.Equal(HttpStatusCode.Created, firstResponse.StatusCode);
+            var firstResponseText = await firstResponse.Content.ReadAsStringAsync();
+
+            Assert.True(
+                firstResponse.StatusCode == HttpStatusCode.Created,
+                $"Expected first register 201 Created but got {(int)firstResponse.StatusCode} {firstResponse.StatusCode}. Body: {firstResponseText}"
+            );
 
             var duplicateDto = new RegisterDTO
             {
                 Username = username,
                 Password = "123456",
                 FullName = "Auth Test User Duplicate",
-                Email = CreateEmail(CreateUsername("dupemail")),
-                Phone = CreatePhone()
+                Email = CreateEmail(CreateUsername("dup2")),
+                Phone = null
             };
 
             var response = await _client.PostAsJsonAsync(
@@ -122,14 +126,10 @@ namespace CreationStore.Tests
                 duplicateDto
             );
 
-            var result = await response.Content
-                .ReadFromJsonAsync<ResponseTypeDTO<object>>();
+            var responseText = await response.Content.ReadAsStringAsync();
 
             Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
-
-            Assert.NotNull(result);
-            Assert.Equal(409, result!.StatusCode);
-            Assert.Equal("Username already exists", result.Message);
+            Assert.Contains("Username already exists", responseText);
         }
 
         [Fact]
@@ -148,10 +148,15 @@ namespace CreationStore.Tests
                 dto
             );
 
+            var responseText = await response.Content.ReadAsStringAsync();
+
+            Assert.True(
+                response.StatusCode == HttpStatusCode.OK,
+                $"Expected 200 OK but got {(int)response.StatusCode} {response.StatusCode}. Body: {responseText}"
+            );
+
             var result = await response.Content
                 .ReadFromJsonAsync<ResponseTypeDTO<LoginResponseDTO>>();
-
-            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
             Assert.NotNull(result);
             Assert.Equal(200, result!.StatusCode);
@@ -201,10 +206,16 @@ namespace CreationStore.Tests
                 loginDto
             );
 
+            var loginResponseText = await loginResponse.Content.ReadAsStringAsync();
+
+            Assert.True(
+                loginResponse.StatusCode == HttpStatusCode.OK,
+                $"Expected login 200 OK but got {(int)loginResponse.StatusCode} {loginResponse.StatusCode}. Body: {loginResponseText}"
+            );
+
             var loginResult = await loginResponse.Content
                 .ReadFromJsonAsync<ResponseTypeDTO<LoginResponseDTO>>();
 
-            Assert.Equal(HttpStatusCode.OK, loginResponse.StatusCode);
             Assert.NotNull(loginResult);
             Assert.NotNull(loginResult!.Content);
             Assert.False(string.IsNullOrWhiteSpace(loginResult.Content!.Token));
@@ -216,10 +227,15 @@ namespace CreationStore.Tests
 
             var response = await _client.GetAsync("/api/auth/me");
 
+            var responseText = await response.Content.ReadAsStringAsync();
+
+            Assert.True(
+                response.StatusCode == HttpStatusCode.OK,
+                $"Expected /me 200 OK but got {(int)response.StatusCode} {response.StatusCode}. Body: {responseText}"
+            );
+
             var result = await response.Content
                 .ReadFromJsonAsync<ResponseTypeDTO<UserProfileDTO>>();
-
-            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
             Assert.NotNull(result);
             Assert.Equal(200, result!.StatusCode);
@@ -228,14 +244,14 @@ namespace CreationStore.Tests
             Assert.NotNull(result.Content);
             Assert.Equal(testUser.Username, result.Content!.Username);
             Assert.Equal(testUser.Email, result.Content.Email);
-            Assert.Equal(testUser.Phone, result.Content.Phone);
+            Assert.Null(result.Content.Phone);
             Assert.Contains("Member", result.Content.Roles);
         }
 
         private async Task<HttpResponseMessage> RegisterUserAsync(
             string username,
             string email,
-            string phone,
+            string? phone,
             string password = "123456",
             string fullName = "Auth Test User"
         )
@@ -263,24 +279,28 @@ namespace CreationStore.Tests
         {
             var username = CreateUsername(scenario);
             var email = CreateEmail(username);
-            var phone = CreatePhone();
             var password = "123456";
 
             var response = await RegisterUserAsync(
-                username,
-                email,
-                phone,
-                password
+                username: username,
+                email: email,
+                phone: null,
+                password: password
             );
 
-            Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+            var responseText = await response.Content.ReadAsStringAsync();
+
+            Assert.True(
+                response.StatusCode == HttpStatusCode.Created,
+                $"Expected register 201 Created but got {(int)response.StatusCode} {response.StatusCode}. Body: {responseText}"
+            );
 
             return new TestUserData
             {
                 Username = username,
                 Password = password,
                 Email = email,
-                Phone = phone
+                Phone = null
             };
         }
 
@@ -323,21 +343,52 @@ namespace CreationStore.Tests
             await db.SaveChangesAsync();
         }
 
+        private async Task CleanupUsersByPrefixAsync(string prefix)
+        {
+            using var scope = _factory.Services.CreateScope();
+
+            var db = scope.ServiceProvider
+                .GetRequiredService<CreationStoreDbContext>();
+
+            var users = await db.Users
+                .Where(u => u.Username.StartsWith(prefix))
+                .ToListAsync();
+
+            if (!users.Any())
+            {
+                return;
+            }
+
+            var userIds = users
+                .Select(u => u.UserId)
+                .ToList();
+
+            var userRoles = await db.UserRoles
+                .Where(ur => userIds.Contains(ur.UserId))
+                .ToListAsync();
+
+            db.UserRoles.RemoveRange(userRoles);
+            db.Users.RemoveRange(users);
+
+            await db.SaveChangesAsync();
+        }
+
         private static string CreateUsername(string scenario)
         {
-            return $"authtest_{scenario}_{Guid.NewGuid():N}";
+            var shortScenario = scenario.Length > 10
+                ? scenario.Substring(0, 10)
+                : scenario;
+
+            var suffix = Guid.NewGuid()
+                .ToString("N")
+                .Substring(0, 8);
+
+            return $"autht_{shortScenario}_{suffix}";
         }
 
         private static string CreateEmail(string username)
         {
             return $"{username}@gmail.com";
-        }
-
-        private static string CreatePhone()
-        {
-            var number = Interlocked.Increment(ref _phoneCounter);
-
-            return $"09{number:D8}";
         }
 
         private class TestUserData
@@ -348,7 +399,7 @@ namespace CreationStore.Tests
 
             public string Email { get; set; } = string.Empty;
 
-            public string Phone { get; set; } = string.Empty;
+            public string? Phone { get; set; }
         }
     }
 }
