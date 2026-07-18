@@ -52,6 +52,7 @@ builder.Services.AddDbContext<CreationStoreDbContext>(options =>
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ICartService, CartService>();
 
 // JwtAuthService dùng để tạo JWT token
 builder.Services.AddScoped<JwtAuthService>();
