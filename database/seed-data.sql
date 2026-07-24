@@ -148,6 +148,11 @@ SELECT * FROM Categories;
  -- get all products
 SELECT * FROM Products;
 
+-- get all carts
+SELECT * FROM carts;
+
+-- get all orders
+SELECT * FROM Orders;
 
 -- cleanup test data
 DELETE ur
