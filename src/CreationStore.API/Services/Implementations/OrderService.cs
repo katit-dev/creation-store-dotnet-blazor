@@ -143,6 +143,7 @@ namespace CreationStore.API.Services.Implementations
         // ============================================================
         public async Task<ResponseTypeDTO<List<OrderResponseDTO>>> GetMyOrdersAsync()
         {
+            // lay userId tu token
             var userId = GetCurrentUserId();
 
             if (userId == null)
@@ -155,6 +156,7 @@ namespace CreationStore.API.Services.Implementations
                 };
             }
 
+            // lay tat ca order cua user
             var orders = await _context.Orders
                 .AsNoTracking()
                 .Include(o => o.OrderItems)
