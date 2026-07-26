@@ -90,23 +90,27 @@ namespace CreationStore.API.Services.Implementations
         // VALIDATE SIGNATURE
         // Mục đích:
         // - Khi VNPAY redirect về ReturnUrl
+        // - Lúc này Backend nhận Request.Query
         // - Backend phải kiểm tra vnp_SecureHash
         // - Nếu chữ ký sai thì không được update order thành paid
         // ============================================================
         public bool ValidateSignature(IQueryCollection query)
         {
+            // lấy hashSecret
             var hashSecret = _configuration["VnPay:HashSecret"];
 
             if (string.IsNullOrWhiteSpace(hashSecret))
                 throw new Exception("VNPAY HashSecret is missing");
 
+            // Lấy chữ ký VNPAY gửi về
             var vnpSecureHash = query["vnp_SecureHash"].ToString();
 
             if (string.IsNullOrWhiteSpace(vnpSecureHash))
                 return false;
 
             var vnpParams = new SortedDictionary<string, string>();
-
+            // Sau đó build lại danh sách tham số, nhưng bỏ qua:vnp_SecureHash
+            // vnp_SecureHashType
             foreach (var item in query)
             {
                 var key = item.Key;
@@ -127,10 +131,13 @@ namespace CreationStore.API.Services.Implementations
                 vnpParams.Add(key, value);
             }
 
+            // rồi tạo lại chữ ký
             var signData = BuildQueryString(vnpParams);
 
             var calculatedHash = HmacSha512(hashSecret, signData);
 
+            // so sánh nếu bằng nhau thì Có thể xử lý payment
+            // nếu khác nhau thì Không được update order thành Paid
             return string.Equals(
                 calculatedHash,
                 vnpSecureHash,
