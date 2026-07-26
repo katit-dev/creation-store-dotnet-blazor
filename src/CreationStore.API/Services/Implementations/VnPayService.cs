@@ -47,7 +47,7 @@ namespace CreationStore.API.Services.Implementations
             if (string.IsNullOrWhiteSpace(returnUrl))
                 throw new Exception("VNPAY ReturnUrl is missing");
 
-            var now = DateTime.Now;
+            var now = DateTime.UtcNow.AddHours(7);
             var expireDate = now.AddMinutes(15);
 
             // VNPAY yêu cầu amount * 100
