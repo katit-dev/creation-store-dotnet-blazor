@@ -527,13 +527,15 @@ namespace CreationStore.API.Services.Implementations
         // ============================================================
         private static string GenerateVnpTxnRef(int orderId)
         {
-            var timePart = DateTime.Now.ToString("yyyyMMddHHmmss");
+            var timePart = DateTime.UtcNow
+                .AddHours(7)
+                .ToString("yyyyMMddHHmmss");
 
             var randomPart = Guid.NewGuid()
                 .ToString("N")
                 .Substring(0, 8);
 
-            return $"PAY_{orderId}_{timePart}_{randomPart}";
+            return $"PAY{orderId}{timePart}{randomPart}";
         }
 
         // ============================================================
