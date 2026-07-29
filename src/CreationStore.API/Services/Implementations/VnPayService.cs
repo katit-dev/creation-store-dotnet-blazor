@@ -30,10 +30,10 @@ namespace CreationStore.API.Services.Implementations
             string ipAddress
         )
         {
-            var baseUrl = _configuration["VnPay:BaseUrl"];
-            var tmnCode = _configuration["VnPay:TmnCode"];
-            var hashSecret = _configuration["VnPay:HashSecret"];
-            var returnUrl = _configuration["VnPay:ReturnUrl"];
+            var baseUrl = _configuration["VnPay:BaseUrl"]?.Trim();
+            var tmnCode = _configuration["VnPay:TmnCode"]?.Trim();
+            var hashSecret = _configuration["VnPay:HashSecret"]?.Trim();
+            var returnUrl = _configuration["VnPay:ReturnUrl"]?.Trim();
 
             if (string.IsNullOrWhiteSpace(baseUrl))
                 throw new Exception("VNPAY BaseUrl is missing");
@@ -47,6 +47,7 @@ namespace CreationStore.API.Services.Implementations
             if (string.IsNullOrWhiteSpace(returnUrl))
                 throw new Exception("VNPAY ReturnUrl is missing");
 
+            // VNPAY dùng thời gian GMT+7, format yyyyMMddHHmmss
             var now = DateTime.UtcNow.AddHours(7);
             var expireDate = now.AddMinutes(15);
 
@@ -55,7 +56,11 @@ namespace CreationStore.API.Services.Implementations
             var vnpAmount = Convert.ToInt64(amount * 100)
                 .ToString(CultureInfo.InvariantCulture);
 
-            var vnpParams = new SortedDictionary<string, string>
+            // SortedDictionary + StringComparer.Ordinal giúp sort key ổn định
+            // khi tạo chuỗi ký hash.
+            var vnpParams = new SortedDictionary<string, string>(
+                StringComparer.Ordinal
+            )
             {
                 { "vnp_Version", "2.1.0" },
                 { "vnp_Command", "pay" },
@@ -96,21 +101,20 @@ namespace CreationStore.API.Services.Implementations
         // ============================================================
         public bool ValidateSignature(IQueryCollection query)
         {
-            // lấy hashSecret
-            var hashSecret = _configuration["VnPay:HashSecret"];
+            var hashSecret = _configuration["VnPay:HashSecret"]?.Trim();
 
             if (string.IsNullOrWhiteSpace(hashSecret))
                 throw new Exception("VNPAY HashSecret is missing");
 
-            // Lấy chữ ký VNPAY gửi về
             var vnpSecureHash = query["vnp_SecureHash"].ToString();
 
             if (string.IsNullOrWhiteSpace(vnpSecureHash))
                 return false;
 
-            var vnpParams = new SortedDictionary<string, string>();
-            // Sau đó build lại danh sách tham số, nhưng bỏ qua:vnp_SecureHash
-            // vnp_SecureHashType
+            var vnpParams = new SortedDictionary<string, string>(
+                StringComparer.Ordinal
+            );
+
             foreach (var item in query)
             {
                 var key = item.Key;
@@ -131,13 +135,10 @@ namespace CreationStore.API.Services.Implementations
                 vnpParams.Add(key, value);
             }
 
-            // rồi tạo lại chữ ký
             var signData = BuildQueryString(vnpParams);
 
             var calculatedHash = HmacSha512(hashSecret, signData);
 
-            // so sánh nếu bằng nhau thì Có thể xử lý payment
-            // nếu khác nhau thì Không được update order thành Paid
             return string.Equals(
                 calculatedHash,
                 vnpSecureHash,
@@ -176,7 +177,8 @@ namespace CreationStore.API.Services.Implementations
         // Mục đích:
         // - Convert dictionary thành chuỗi:
         //   key=value&key=value
-        // - SortedDictionary giúp key đã được sắp xếp tăng dần
+        // - WebUtility.UrlEncode encode khoảng trắng thành dấu +
+        // - Dùng cùng chuỗi này để ký hash và tạo paymentUrl
         // ============================================================
         private static string BuildQueryString(
             SortedDictionary<string, string> data
@@ -186,6 +188,11 @@ namespace CreationStore.API.Services.Implementations
 
             foreach (var item in data)
             {
+                if (string.IsNullOrWhiteSpace(item.Value))
+                {
+                    continue;
+                }
+
                 var key = WebUtility.UrlEncode(item.Key);
                 var value = WebUtility.UrlEncode(item.Value);
 
