@@ -119,7 +119,7 @@ namespace CreationStore.API.Services.Implementations
 
             return new ResponseTypeDTO<CategoryResponseDTO>
             {
-                StatusCode = 200,
+                StatusCode = 201,
                 Message = "Category created successfully",
                 Content = response.Content,
                 DateTime = System.DateTime.Now
