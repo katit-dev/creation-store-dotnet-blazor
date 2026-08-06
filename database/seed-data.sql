@@ -167,3 +167,43 @@ WHERE Username LIKE 'authtest%';
 SELECT *
 FROM Users
 WHERE Username LIKE 'authtest%';
+
+
+-- Test admin controller
+-- doi role cho dung voi admin
+
+DECLARE @UserId INT;
+
+SELECT @UserId = UserId
+FROM Users
+WHERE Username = 'admin_test';
+
+DELETE FROM UserRoles
+WHERE UserId = @UserId;
+
+INSERT INTO UserRoles (UserId, RoleId)
+VALUES (@UserId, 1);
+
+--
+SELECT 
+    u.UserId,
+    u.Username,
+    r.RoleId,
+    r.RoleName
+FROM Users u
+INNER JOIN UserRoles ur ON u.UserId = ur.UserId
+INNER JOIN Roles r ON ur.RoleId = r.RoleId
+WHERE u.Username = 'admin_test';
+
+-- xoa admin_test
+-- DECLARE @UserId INT;
+
+SELECT @UserId = UserId
+FROM Users
+WHERE Username = 'admin_test';
+
+DELETE FROM UserRoles
+WHERE UserId = @UserId;
+
+DELETE FROM Users
+WHERE UserId = @UserId;
