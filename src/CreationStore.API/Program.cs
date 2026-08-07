@@ -58,6 +58,7 @@ builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IVnPayService, VnPayService>();
 builder.Services.AddScoped<IAdminOrderService, AdminOrderService>();
 builder.Services.AddScoped<IAdminUserService, AdminUserService>();
+builder.Services.AddScoped<IAdminPaymentService, AdminPaymentService>();
 
 // JwtAuthService dùng để tạo JWT token
 builder.Services.AddScoped<JwtAuthService>();
