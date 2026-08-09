@@ -23,8 +23,9 @@ namespace CreationStore.API.Services.Implementations
                 .AsNoTracking()
                 .Where(o => o.PaymentStatus == CPaymentStatus.Succeeded)
                 .SumAsync(o => (decimal?)o.TotalAmount) ?? 0;
-                    // neu la null thi ep ve 0
-                    // neu 
+                    // decimal khong duoc null
+                    // cho phep tra ve decimal hoac null
+                    // ?? 0 ==> neu ket qua null thi lay 0
             var summary = new AdminDashboardSummaryDTO
             {
                 TotalUsers = await _context.Users.CountAsync(),
@@ -84,6 +85,8 @@ namespace CreationStore.API.Services.Implementations
         public async Task<ResponseTypeDTO<AdminRevenueStatisticDTO>>
             GetRevenueAsync(DateTime? fromDate, DateTime? toDate)
         {
+            // neu startDate khong nhap thi tu dong lay -6 ngay 
+            // neu endDate khkong nhap thi tu dong lay hom nay
             var startDate = fromDate?.Date ?? DateTime.Today.AddDays(-6);
             var endDate = toDate?.Date ?? DateTime.Today;
 
