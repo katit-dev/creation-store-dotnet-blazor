@@ -19,19 +19,18 @@
     <link rel="stylesheet"
           href="bootstrap/bootstrap.min.css" />
 
-    <!-- Global CSS mặc định của Blazor -->
-    <link rel="stylesheet"
-          href="app.css" />
-
-    <!-- CSS isolation generated file, có cũng được, không dùng .razor.css thì không ảnh hưởng -->
+    <!-- CSS isolation generated file -->
     <link rel="stylesheet"
           href="CreationStore.Blazor.styles.css" />
 
     <!-- FontAwesome 5 -->
     <link rel="stylesheet"
           href="https://use.fontawesome.com/releases/v5.1.1/css/all.css"
-          integrity="sha384-O8whS3fhG2OnA5Kas0Y9l3cfpmYjapjI0E4theH4iuMD+pLhbf6JI0jIMfYcK3yZ"
           crossorigin="anonymous" />
+
+    <!-- Custom CSS của mình để sau cùng -->
+    <link rel="stylesheet"
+          href="app.css?v=3" />
 
     <HeadOutlet @rendermode="InteractiveServer" />
 </head>
@@ -39,7 +38,7 @@
 <body>
     <Routes @rendermode="InteractiveServer" />
 
-    <!-- Bootstrap JS: cần cho dropdown, navbar toggle, modal... -->
+    <!-- Bootstrap JS -->
     <script src="bootstrap/bootstrap.bundle.min.js"></script>
 
     <!-- Blazor Web App script -->
