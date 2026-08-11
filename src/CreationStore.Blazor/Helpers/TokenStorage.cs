@@ -4,7 +4,7 @@ namespace CreationStore.Blazor.Helpers
 {
     public class TokenStorage
     {
-        private const string TokenKey = "creation_store_token";
+        private const string TokenKey = "creation_store_access_token";
 
         private readonly IJSRuntime _jsRuntime;
 
