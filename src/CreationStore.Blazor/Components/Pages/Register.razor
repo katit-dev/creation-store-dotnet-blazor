@@ -1,86 +1,170 @@
 @page "/register"
+
 @using CreationStore.Blazor.DTOs.Auth
 @using CreationStore.Blazor.Services
+
 @inject UserStateService UserStateService
 @inject NavigationManager NavigationManager
 
 <PageTitle>Đăng ký</PageTitle>
 
 <div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="card shadow-sm">
-            <div class="card-header bg-white">
-                <h4 class="mb-0">Đăng ký tài khoản</h4>
+    <div class="col-12 col-md-8 col-lg-6">
+
+        <div class="cs-card cs-auth-card p-4 p-md-5">
+            <div class="mb-4">
+                <h2 class="cs-auth-title mb-2">
+                    Đăng ký tài khoản
+                </h2>
+
+                <p class="cs-muted mb-0">
+                    Đã có tài khoản?
+                    <a href="/login"
+                       class="text-decoration-none"
+                       style="color:#ff6f8e">
+                        Đăng nhập ngay
+                    </a>
+                </p>
             </div>
 
-            <div class="card-body">
-                @if (!string.IsNullOrWhiteSpace(ErrorMessage))
-                {
-                    <div class="alert alert-danger">
-                        @ErrorMessage
-                    </div>
-                }
+            @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+            {
+                <div class="alert alert-danger">
+                    @ErrorMessage
+                </div>
+            }
 
-                @if (!string.IsNullOrWhiteSpace(SuccessMessage))
-                {
-                    <div class="alert alert-success">
-                        @SuccessMessage
-                    </div>
-                }
+            @if (!string.IsNullOrWhiteSpace(SuccessMessage))
+            {
+                <div class="alert alert-success">
+                    @SuccessMessage
+                </div>
+            }
 
-                <EditForm Model="RegisterModel" OnValidSubmit="HandleRegister">
-                    <DataAnnotationsValidator />
-                    <ValidationSummary />
+            <EditForm Model="RegisterModel" OnValidSubmit="HandleRegister">
+                <DataAnnotationsValidator />
 
-                    <div class="mb-3">
-                        <label class="form-label">Username</label>
+                <div class="mb-3">
+                    <label class="form-label">
+                        Username
+                    </label>
 
-                        <InputText class="form-control"
+                    <div class="input-group">
+                        <span class="input-group-text cs-input">
+                            <i class="fas fa-user"></i>
+                        </span>
+
+                        <InputText class="form-control cs-input"
+                                   placeholder="Nhập username"
                                    @bind-Value="RegisterModel.Username" />
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Mật khẩu</label>
+                    <ValidationMessage For="@(() => RegisterModel.Username)" />
+                </div>
 
-                        <InputText class="form-control"
+                <div class="mb-3">
+                    <label class="form-label">
+                        Mật khẩu
+                    </label>
+
+                    <div class="input-group">
+                        <span class="input-group-text cs-input">
+                            <i class="fas fa-lock"></i>
+                        </span>
+
+                        <InputText class="form-control cs-input"
                                    type="password"
+                                   placeholder="Nhập mật khẩu"
                                    @bind-Value="RegisterModel.Password" />
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Họ tên</label>
+                    <ValidationMessage For="@(() => RegisterModel.Password)" />
+                </div>
 
-                        <InputText class="form-control"
+                <div class="mb-3">
+                    <label class="form-label">
+                        Họ tên
+                    </label>
+
+                    <div class="input-group">
+                        <span class="input-group-text cs-input">
+                            <i class="fas fa-id-card"></i>
+                        </span>
+
+                        <InputText class="form-control cs-input"
+                                   placeholder="Nhập họ tên"
                                    @bind-Value="RegisterModel.FullName" />
                     </div>
+                </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Email</label>
+                <div class="mb-3">
+                    <label class="form-label">
+                        Email
+                    </label>
 
-                        <InputText class="form-control"
+                    <div class="input-group">
+                        <span class="input-group-text cs-input">
+                            <i class="fas fa-envelope"></i>
+                        </span>
+
+                        <InputText class="form-control cs-input"
+                                   placeholder="Nhập email"
                                    @bind-Value="RegisterModel.Email" />
                     </div>
+                </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Số điện thoại</label>
+                <div class="mb-4">
+                    <label class="form-label">
+                        Số điện thoại
+                    </label>
 
-                        <InputText class="form-control"
+                    <div class="input-group">
+                        <span class="input-group-text cs-input">
+                            <i class="fas fa-phone"></i>
+                        </span>
+
+                        <InputText class="form-control cs-input"
+                                   placeholder="Nhập số điện thoại"
                                    @bind-Value="RegisterModel.Phone" />
                     </div>
-
-                    <button type="submit"
-                            class="btn btn-danger w-100"
-                            disabled="@IsLoading">
-                        @(IsLoading ? "Đang đăng ký..." : "Đăng ký")
-                    </button>
-                </EditForm>
-
-                <div class="mt-3 text-center">
-                    <span>Đã có tài khoản?</span>
-                    <a href="/login">Đăng nhập</a>
                 </div>
+
+                <button type="submit"
+                        class="btn cs-btn-primary w-100 py-2"
+                        disabled="@IsLoading">
+                    @if (IsLoading)
+                    {
+                        <span>
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                            Đang đăng ký...
+                        </span>
+                    }
+                    else
+                    {
+                        <span>Đăng ký</span>
+                    }
+                </button>
+            </EditForm>
+
+            <div class="mt-4 text-center">
+                <p class="cs-muted small mb-0">
+                    Bằng việc đăng ký, bạn đồng ý với
+                    <a href="#"
+                       class="text-decoration-none"
+                       style="color:#ff6f8e">
+                        Điều khoản sử dụng
+                    </a>
+                    và
+                    <a href="#"
+                       class="text-decoration-none"
+                       style="color:#ff6f8e">
+                        Chính sách bảo mật
+                    </a>
+                    của chúng tôi.
+                </p>
             </div>
         </div>
+
     </div>
 </div>
 
