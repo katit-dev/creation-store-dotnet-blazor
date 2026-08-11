@@ -24,6 +24,7 @@ builder.Services.AddScoped(sp =>
 builder.Services.AddScoped<TokenStorage>();
 builder.Services.AddScoped<UserStateService>();
 builder.Services.AddScoped<ProductStateService>();
+builder.Services.AddScoped<CartStateService>();
 
 var app = builder.Build();
 

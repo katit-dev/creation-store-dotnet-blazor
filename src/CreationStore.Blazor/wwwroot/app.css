@@ -132,3 +132,47 @@ footer a:hover,
 header a:hover {
     color: #ff8da4 !important;
 }
+
+
+.cs-product-actions {
+    gap: 12px;
+}
+
+.cs-product-actions .btn {
+    padding: 0.65rem 0.85rem;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.cs-btn-detail {
+    background: #24191C !important;
+    border: 1px solid #8C3A4D !important;
+    color: #FFD9E2 !important;
+}
+
+.cs-btn-detail:hover {
+    background: #4F3439 !important;
+    border-color: #B84A62 !important;
+    color: #FFFFFF !important;
+}
+
+.cs-btn-cart {
+    background: linear-gradient(180deg, #C94A68 0%, #8C3148 100%) !important;
+    border: 1px solid #D85B77 !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 0 14px rgba(201, 74, 104, 0.28);
+}
+
+.cs-btn-cart:hover {
+    background: linear-gradient(180deg, #D85B77 0%, #9B314B 100%) !important;
+    border-color: #F06D8A !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 0 18px rgba(201, 74, 104, 0.4);
+}
+
+.cs-btn-cart:disabled {
+    opacity: 0.75;
+    box-shadow: none;
+}
