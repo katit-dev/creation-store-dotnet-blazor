@@ -176,3 +176,19 @@ header a:hover {
     opacity: 0.75;
     box-shadow: none;
 }
+
+.cs-cart-item {
+    border-bottom: 1px solid #2B2224;
+}
+
+.cs-cart-item:last-child {
+    border-bottom: none;
+}
+
+.cs-qty-btn {
+    width: 36px;
+    height: 36px;
+    padding: 0 !important;
+    border-radius: 8px;
+    font-weight: 700;
+}

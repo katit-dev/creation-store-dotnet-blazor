@@ -1,0 +1,301 @@
+@page "/cart"
+
+@using CreationStore.Blazor.DTOs.Cart
+@using CreationStore.Blazor.Services
+
+@implements IDisposable
+
+@inject UserStateService UserStateService
+@inject CartStateService CartStateService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Cart</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1">
+            Shopping Cart
+        </h2>
+
+        <p class="cs-muted mb-0">
+            Review your selected products before checkout.
+        </p>
+    </div>
+
+    <button type="button"
+            class="btn cs-btn-outline"
+            @onclick="ContinueShopping">
+        Continue Shopping
+    </button>
+</div>
+
+@if (!HasCheckedAuth)
+{
+    <div class="cs-card p-5 text-center">
+        <div class="spinner-border text-light mb-3"></div>
+
+        <p class="cs-muted mb-0">
+            Checking your account...
+        </p>
+    </div>
+}
+else if (CartStateService.IsLoading)
+{
+    <div class="cs-card p-5 text-center">
+        <div class="spinner-border text-light mb-3"></div>
+
+        <p class="cs-muted mb-0">
+            Loading cart...
+        </p>
+    </div>
+}
+else if (!UserStateService.IsAuthenticated)
+{
+    <div class="cs-card p-5 text-center">
+        <h4 class="mb-3">
+            Please login
+        </h4>
+
+        <p class="cs-muted">
+            You need to login before viewing your cart.
+        </p>
+
+        <button type="button"
+                class="btn cs-btn-primary"
+                @onclick="GoToLogin">
+            Login
+        </button>
+    </div>
+}
+else
+{
+    @if (!string.IsNullOrWhiteSpace(CartStateService.ErrorMessage))
+    {
+        <div class="alert alert-danger">
+            @CartStateService.ErrorMessage
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(CartStateService.SuccessMessage))
+    {
+        <div class="alert alert-success">
+            @CartStateService.SuccessMessage
+        </div>
+    }
+
+    @if (CartStateService.Cart == null ||
+         CartStateService.Cart.Items.Count == 0)
+    {
+        <div class="cs-card p-5 text-center">
+            <h4 class="mb-3">
+                Your cart is empty
+            </h4>
+
+            <p class="cs-muted">
+                Add products to your cart before checkout.
+            </p>
+
+            <button type="button"
+                    class="btn cs-btn-primary"
+                    @onclick="ContinueShopping">
+                Browse Products
+            </button>
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            <div class="col-12 col-lg-8">
+                <div class="cs-card p-3 p-md-4">
+                    @foreach (CartItemResponseDTO item in CartStateService.Cart.Items)
+                    {
+                        <div class="cs-cart-item py-3">
+                            <div class="row align-items-center g-3">
+                                <div class="col-12 col-md-5">
+                                    <h5 class="fw-semibold mb-1">
+                                        @item.ProductName
+                                    </h5>
+
+                                    <div class="cs-muted small">
+                                        Unit price: @FormatCurrency(item.DisplayUnitPrice)
+                                    </div>
+                                </div>
+
+                                <div class="col-6 col-md-3">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <button type="button"
+                                                class="btn cs-btn-outline cs-qty-btn"
+                                                disabled="@CartStateService.IsLoading"
+                                                @onclick="() => DecreaseQuantity(item)">
+                                            -
+                                        </button>
+
+                                        <span class="fw-bold">
+                                            @item.Quantity
+                                        </span>
+
+                                        <button type="button"
+                                                class="btn cs-btn-outline cs-qty-btn"
+                                                disabled="@CartStateService.IsLoading"
+                                                @onclick="() => IncreaseQuantity(item)">
+                                            +
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="col-6 col-md-2 text-md-end">
+                                    <div class="fw-bold">
+                                        @FormatCurrency(item.DisplaySubTotal)
+                                    </div>
+                                </div>
+
+                                <div class="col-12 col-md-2 text-md-end">
+                                    <button type="button"
+                                            class="btn cs-btn-detail"
+                                            disabled="@CartStateService.IsLoading"
+                                            @onclick="() => RemoveItem(item.CartItemId)">
+                                        Remove
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="col-12 col-lg-4">
+                <div class="cs-card p-4">
+                    <h4 class="fw-bold mb-4">
+                        Order Summary
+                    </h4>
+
+                    <div class="d-flex justify-content-between mb-3">
+                        <span class="cs-muted">Items</span>
+                        <span>@CartStateService.CartItemCount</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-3">
+                        <span class="cs-muted">Subtotal</span>
+                        <span>@FormatCurrency(CartStateService.TotalAmount)</span>
+                    </div>
+
+                    <hr />
+
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <span class="fw-bold">Total</span>
+                        <span class="fw-bold fs-4">
+                            @FormatCurrency(CartStateService.TotalAmount)
+                        </span>
+                    </div>
+
+                    <button type="button"
+                            class="btn cs-btn-cart w-100 py-2 mb-3"
+                            disabled>
+                        Checkout
+                    </button>
+
+                    <button type="button"
+                            class="btn cs-btn-outline w-100 py-2"
+                            disabled="@CartStateService.IsLoading"
+                            @onclick="ClearCart">
+                        Clear Cart
+                    </button>
+
+                    <p class="cs-muted small mt-3 mb-0">
+                        Checkout will be implemented in the next step.
+                    </p>
+                </div>
+            </div>
+        </div>
+    }
+}
+
+@code {
+    private bool HasCheckedAuth { get; set; }
+
+    protected override void OnInitialized()
+    {
+        CartStateService.OnChange += HandleCartStateChanged;
+        UserStateService.OnChange += HandleUserStateChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await UserStateService.GetProfileAsync();
+
+            HasCheckedAuth = true;
+
+            if (UserStateService.IsAuthenticated)
+            {
+                await CartStateService.LoadCartAsync();
+            }
+
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void HandleCartStateChanged()
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleUserStateChanged()
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private async Task IncreaseQuantity(CartItemResponseDTO item)
+    {
+        await CartStateService.UpdateQuantityAsync(
+            item.CartItemId,
+            item.Quantity + 1
+        );
+    }
+
+    private async Task DecreaseQuantity(CartItemResponseDTO item)
+    {
+        if (item.Quantity <= 1)
+        {
+            await CartStateService.RemoveItemAsync(item.CartItemId);
+            return;
+        }
+
+        await CartStateService.UpdateQuantityAsync(
+            item.CartItemId,
+            item.Quantity - 1
+        );
+    }
+
+    private async Task RemoveItem(int cartItemId)
+    {
+        await CartStateService.RemoveItemAsync(cartItemId);
+    }
+
+    private async Task ClearCart()
+    {
+        await CartStateService.ClearCartAsync();
+    }
+
+    private void ContinueShopping()
+    {
+        NavigationManager.NavigateTo("/products");
+    }
+
+    private void GoToLogin()
+    {
+        NavigationManager.NavigateTo("/login");
+    }
+
+    private static string FormatCurrency(decimal price)
+    {
+        return price.ToString("#,##0") + "đ";
+    }
+
+    public void Dispose()
+    {
+        CartStateService.OnChange -= HandleCartStateChanged;
+        UserStateService.OnChange -= HandleUserStateChanged;
+    }
+}
