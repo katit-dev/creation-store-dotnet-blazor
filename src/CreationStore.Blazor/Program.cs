@@ -23,6 +23,7 @@ builder.Services.AddScoped(sp =>
 // DI State
 builder.Services.AddScoped<TokenStorage>();
 builder.Services.AddScoped<UserStateService>();
+builder.Services.AddScoped<ProductStateService>();
 
 var app = builder.Build();
 
