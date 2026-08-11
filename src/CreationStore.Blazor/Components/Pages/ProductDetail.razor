@@ -1,0 +1,214 @@
+@page "/products/{ProductId:int}"
+
+@using CreationStore.Blazor.DTOs.Products
+@using CreationStore.Blazor.Services
+
+@inject ProductStateService ProductStateService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Chi tiết sản phẩm</PageTitle>
+
+@if (IsLoading)
+{
+    <div class="cs-card p-5 text-center">
+        <div class="spinner-border text-light mb-3"></div>
+        <p class="cs-muted mb-0">
+            Đang tải chi tiết sản phẩm...
+        </p>
+    </div>
+}
+else if (!string.IsNullOrWhiteSpace(ErrorMessage))
+{
+    <div class="cs-card p-5 text-center">
+        <h4 class="mb-3">Không tìm thấy sản phẩm</h4>
+
+        <p class="cs-muted">
+            @ErrorMessage
+        </p>
+
+        <button class="btn cs-btn-primary"
+                @onclick="GoBackToProducts">
+            Quay lại danh sách sản phẩm
+        </button>
+    </div>
+}
+else if (Product == null)
+{
+    <div class="cs-card p-5 text-center">
+        <h4>Không có dữ liệu sản phẩm</h4>
+
+        <button class="btn cs-btn-primary mt-3"
+                @onclick="GoBackToProducts">
+            Quay lại
+        </button>
+    </div>
+}
+else
+{
+    <div class="row g-4">
+        <div class="col-12">
+            <button class="btn cs-btn-outline mb-3"
+                    @onclick="GoBackToProducts">
+                <i class="fas fa-arrow-left me-1"></i>
+                Quay lại sản phẩm
+            </button>
+        </div>
+
+        <div class="col-12 col-lg-6">
+            <div class="cs-card overflow-hidden">
+                <div class="ratio ratio-16x9 bg-dark">
+                    <img src="@GetImageUrl(Product.ImageUrl)"
+                         class="w-100 h-100"
+                         style="object-fit: cover;"
+                         alt="@Product.ProductName" />
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-6">
+            <div class="cs-card p-4 h-100">
+                <div class="mb-3">
+                    <span class="badge cs-badge-cart">
+                        @Product.CategoryName
+                    </span>
+                </div>
+
+                <h1 class="fw-bold mb-3">
+                    @Product.ProductName
+                </h1>
+
+                <p class="cs-muted mb-4">
+                    @Product.Description
+                </p>
+
+                <div class="mb-4">
+                    <div class="cs-muted small">
+                        Giá sản phẩm
+                    </div>
+
+                    <div class="fw-bold display-6">
+                        @FormatCurrency(Product.Price)
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-6">
+                        <div class="cs-card p-3">
+                            <div class="cs-muted small">
+                                Thời hạn
+                            </div>
+
+                            <div class="fw-semibold">
+                                @GetValidityText(Product.ValidityDays)
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-6">
+                        <div class="cs-card p-3">
+                            <div class="cs-muted small">
+                                Mã danh mục
+                            </div>
+
+                            <div class="fw-semibold">
+                                @Product.CategoryId
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-3">
+                    <button class="btn cs-btn-primary flex-fill py-2"
+                            @onclick="HandleAddToCart">
+                        <i class="fas fa-shopping-cart me-2"></i>
+                        Thêm vào giỏ hàng
+                    </button>
+
+                    <button class="btn cs-btn-outline flex-fill py-2"
+                            @onclick="GoBackToProducts">
+                        Tiếp tục mua sắm
+                    </button>
+                </div>
+
+                <p class="cs-muted small mt-3 mb-0">
+                    Lưu ý: chức năng thêm vào giỏ hàng sẽ được làm ở bước tiếp theo.
+                </p>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int ProductId { get; set; }
+
+    private ProductResponseDTO? Product { get; set; }
+
+    private bool IsLoading { get; set; } = true;
+
+    private string? ErrorMessage { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        IsLoading = true;
+        ErrorMessage = null;
+
+        Product = await ProductStateService.GetProductByIdAsync(ProductId);
+
+        if (Product == null)
+        {
+            ErrorMessage = "Sản phẩm không tồn tại hoặc đã bị xóa.";
+        }
+
+        IsLoading = false;
+    }
+
+    private void GoBackToProducts()
+    {
+        NavigationManager.NavigateTo("/products");
+    }
+
+    private void HandleAddToCart()
+    {
+        // Bước tiếp theo mình sẽ làm CartStateService và gọi POST /api/cart/items.
+        // Tạm thời chưa xử lý add cart thật ở đây.
+        NavigationManager.NavigateTo("/cart");
+    }
+
+    private static string FormatCurrency(decimal price)
+    {
+        return price.ToString("#,##0") + "đ";
+    }
+
+    private static string GetValidityText(int? validityDays)
+    {
+        if (validityDays.HasValue)
+        {
+            return $"{validityDays.Value} ngày";
+        }
+
+        return "Vĩnh viễn";
+    }
+
+    private static string GetImageUrl(string? imageUrl)
+    {
+        if (string.IsNullOrWhiteSpace(imageUrl) ||
+            imageUrl.Equals("string", StringComparison.OrdinalIgnoreCase))
+        {
+            return "https://via.placeholder.com/600x350?text=No+Image";
+        }
+
+        if (imageUrl.StartsWith("http://") ||
+            imageUrl.StartsWith("https://"))
+        {
+            return imageUrl;
+        }
+
+        if (imageUrl.StartsWith("/"))
+        {
+            return imageUrl;
+        }
+
+        return $"/images/{imageUrl}";
+    }
+}

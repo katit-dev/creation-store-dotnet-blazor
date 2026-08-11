@@ -70,6 +70,31 @@ namespace CreationStore.Blazor.Services
             }
         }
 
+        public async Task<ProductResponseDTO?> GetProductByIdAsync(int productId)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync($"api/products/{productId}");
+
+                var responseData = await response.Content
+                    .ReadFromJsonAsync<ResponseTypeDTO<ProductResponseDTO>>();
+
+                if (!response.IsSuccessStatusCode ||
+                    responseData == null ||
+                    responseData.StatusCode != 200 ||
+                    responseData.Content == null)
+                {
+                    return null;
+                }
+
+                return responseData.Content;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
         private void NotifyStateChanged()
         {
             OnChange?.Invoke();

@@ -27,15 +27,13 @@
                     Mua sản phẩm số nhanh chóng, an toàn, hỗ trợ thanh toán VNPAY.
                 </p>
 
-                <button class="btn cs-btn-primary px-4"
-                        @onclick="ScrollToProducts">
+                <button class="btn cs-btn-primary px-4" @onclick="ScrollToProducts">
                     Xem sản phẩm
                 </button>
             </div>
 
             <div class="col-md-5 text-center">
-                <i class="fas fa-store fa-6x"
-                   style="color:#753041"></i>
+                <i class="fas fa-store fa-6x" style="color:#753041"></i>
             </div>
         </div>
     </div>
@@ -63,8 +61,7 @@
             </p>
         </div>
 
-        <button class="btn cs-btn-outline"
-                @onclick="ReloadProducts">
+        <button class="btn cs-btn-outline" @onclick="ReloadProducts">
             <i class="fas fa-sync-alt me-1"></i>
             Tải lại
         </button>
@@ -102,13 +99,10 @@
                 <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
                     <div class="cs-card h-100 overflow-hidden">
 
-                        <a href="@($"/products/{product.ProductId}")"
-                           class="text-decoration-none text-white">
+                        <a href="@($"/products/{product.ProductId}")" class="text-decoration-none text-white">
 
                             <div class="ratio ratio-16x9 bg-dark">
-                                <img src="@GetImageUrl(product.ImageUrl)"
-                                     class="w-100 h-100"
-                                     style="object-fit: cover;"
+                                <img src="@GetImageUrl(product.ImageUrl)" class="w-100 h-100" style="object-fit: cover;"
                                      alt="@product.ProductName" />
                             </div>
 
@@ -119,13 +113,11 @@
                                     </span>
                                 </div>
 
-                                <h6 class="fw-semibold mb-2 text-truncate"
-                                    title="@product.ProductName">
+                                <h6 class="fw-semibold mb-2 text-truncate" title="@product.ProductName">
                                     @product.ProductName
                                 </h6>
 
-                                <p class="cs-muted small mb-3"
-                                   style="height: 40px; overflow: hidden;">
+                                <p class="cs-muted small mb-3" style="height: 40px; overflow: hidden;">
                                     @product.Description
                                 </p>
 
@@ -149,11 +141,9 @@
                                         }
                                     </div>
 
-                                    <button class="btn cs-btn-primary btn-sm"
-                                            @onclick="() => GoToDetail(product.ProductId)"
-                                            @onclick:preventDefault="true">
+                                    <span class="btn cs-btn-primary btn-sm">
                                         <i class="fas fa-eye"></i>
-                                    </button>
+                                    </span>
                                 </div>
                             </div>
                         </a>
@@ -189,10 +179,10 @@
         await ProductStateService.LoadProductsAsync(Keyword);
     }
 
-    private void GoToDetail(int productId)
+    @* private void GoToDetail(int productId)
     {
         NavigationManager.NavigateTo($"/products/{productId}");
-    }
+    } *@
 
     private void ScrollToProducts()
     {
@@ -205,26 +195,26 @@
     }
 
     private static string GetImageUrl(string? imageUrl)
-{
-    if (string.IsNullOrWhiteSpace(imageUrl) ||
-        imageUrl.Equals("string", StringComparison.OrdinalIgnoreCase))
     {
-        return "https://via.placeholder.com/400x220?text=No+Image";
-    }
+        if (string.IsNullOrWhiteSpace(imageUrl) ||
+            imageUrl.Equals("string", StringComparison.OrdinalIgnoreCase))
+        {
+            return "https://via.placeholder.com/400x220?text=No+Image";
+        }
 
-    if (imageUrl.StartsWith("http://") ||
-        imageUrl.StartsWith("https://"))
-    {
-        return imageUrl;
-    }
+        if (imageUrl.StartsWith("http://") ||
+            imageUrl.StartsWith("https://"))
+        {
+            return imageUrl;
+        }
 
-    if (imageUrl.StartsWith("/"))
-    {
-        return imageUrl;
-    }
+        if (imageUrl.StartsWith("/"))
+        {
+            return imageUrl;
+        }
 
-    return $"/images/{imageUrl}";
-}
+        return $"/images/{imageUrl}";
+    }
 
     public void Dispose()
     {
