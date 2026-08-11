@@ -5,7 +5,7 @@
 
 @inject NavigationManager NavigationManager
 @inject UserStateService UserStateService
-
+@inject CartStateService CartStateService
 <header>
     <div class="cs-topbar text-white small">
         <div class="container d-flex justify-content-between align-items-center py-2">
@@ -40,8 +40,7 @@
                         @(UserStateService.CurrentUser?.Username ?? "Account")
                     </span>
 
-                    <button class="btn btn-sm cs-btn-outline"
-                            @onclick="HandleLogout">
+                    <button class="btn btn-sm cs-btn-outline" @onclick="HandleLogout">
                         Logout
                     </button>
                 }
@@ -73,15 +72,10 @@
                 </span>
             </a>
 
-            <form class="flex-grow-1"
-                  @onsubmit="HandleSearch"
-                  @onsubmit:preventDefault="true">
+            <form class="flex-grow-1" @onsubmit="HandleSearch" @onsubmit:preventDefault="true">
                 <div class="cs-search-box d-flex">
-                    <input type="text"
-                           class="form-control border-0 shadow-none"
-                           placeholder="Search products in Creation Store"
-                           @bind="Keyword"
-                           @bind:event="oninput" />
+                    <input type="text" class="form-control border-0 shadow-none"
+                           placeholder="Search products in Creation Store" @bind="Keyword" @bind:event="oninput" />
 
                     <button type="submit" class="btn cs-btn-primary px-4">
                         <i class="fas fa-search"></i>
@@ -94,13 +88,16 @@
                     <i class="fas fa-shopping-cart fa-2x"></i>
 
                     <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill cs-badge-cart">
-                        0
+                        @(UserStateService.IsAuthenticated ? CartStateService.CartItemCount : 0)
                     </span>
                 </div>
 
                 <div class="d-none d-md-block">
                     <div>Cart</div>
-                    <div class="small cs-muted">0đ</div>
+
+                    <div class="small cs-muted">
+                        @FormatCurrency(UserStateService.IsAuthenticated ? CartStateService.TotalAmount : 0)
+                    </div>
                 </div>
             </a>
         </div>
@@ -226,8 +223,8 @@
     protected override void OnInitialized()
     {
         UserStateService.OnChange += HandleUserStateChanged;
+        CartStateService.OnChange += HandleCartStateChanged;
     }
-
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
@@ -238,7 +235,25 @@
 
     private void HandleUserStateChanged()
     {
+        _ = InvokeAsync(async () =>
+        {
+            if (UserStateService.IsAuthenticated)
+            {
+                await CartStateService.LoadCartAsync(showLoading: false);
+            }
+
+            StateHasChanged();
+        });
+    }
+
+    private void HandleCartStateChanged()
+    {
         _ = InvokeAsync(StateHasChanged);
+    }
+
+    private static string FormatCurrency(decimal price)
+    {
+        return price.ToString("#,##0") + "đ";
     }
 
     private async Task HandleLogout()
@@ -262,5 +277,6 @@
     public void Dispose()
     {
         UserStateService.OnChange -= HandleUserStateChanged;
+        CartStateService.OnChange -= HandleCartStateChanged;
     }
 }
