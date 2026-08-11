@@ -1,10 +1,15 @@
 ﻿@inherits LayoutComponentBase
+@implements IDisposable
+
+@using CreationStore.Blazor.Services
+
 @inject NavigationManager NavigationManager
+@inject UserStateService UserStateService
 
 <header class="bg-danger text-white">
     <div class="container">
 
-        @* Thanh trên cùng *@
+        @* ===================== THANH TRÊN CÙNG ===================== *@
         <div class="d-flex justify-content-between align-items-center py-1 small">
             <div class="d-flex align-items-center gap-2">
                 <a href="/" class="text-white text-decoration-none">
@@ -56,17 +61,39 @@
                     </ul>
                 </div>
 
-                <a href="/login" class="text-white text-decoration-none">
-                    Đăng nhập
-                </a>
+                @if (UserStateService.IsAuthenticated)
+                {
+                    <span class="text-white">
+                        <i class="fas fa-user-circle me-1"></i>
+                        @(UserStateService.CurrentUser?.Username ?? "Tài khoản")
+                    </span>
 
-                <a href="/register" class="text-white text-decoration-none">
-                    Đăng ký
-                </a>
+                    @if (UserStateService.IsAdmin)
+                    {
+                        <a href="/admin/dashboard" class="text-white text-decoration-none">
+                            Admin
+                        </a>
+                    }
+
+                    <button class="btn btn-outline-light btn-sm"
+                            @onclick="HandleLogout">
+                        Đăng xuất
+                    </button>
+                }
+                else
+                {
+                    <a href="/login" class="text-white text-decoration-none">
+                        Đăng nhập
+                    </a>
+
+                    <a href="/register" class="text-white text-decoration-none">
+                        Đăng ký
+                    </a>
+                }
             </div>
         </div>
 
-        @* Thanh chính: logo + tìm kiếm + giỏ hàng *@
+        @* ===================== THANH CHÍNH: LOGO + SEARCH + CART ===================== *@
         <div class="d-flex align-items-center gap-4 py-3">
             <a href="/" class="text-white text-decoration-none d-flex align-items-center gap-2">
                 <i class="fas fa-store fa-2x"></i>
@@ -106,12 +133,14 @@
     </div>
 </header>
 
+@* ===================== NỘI DUNG TRANG ===================== *@
 <main class="bg-light min-vh-100">
     <div class="container py-4">
         @Body
     </div>
 </main>
 
+@* ===================== FOOTER ===================== *@
 <footer class="bg-white border-top">
     <div class="container py-5">
         <div class="row g-4">
@@ -139,7 +168,7 @@
                     </li>
                     <li>
                         <a href="#" class="text-secondary text-decoration-none">
-                            Trả Hàng & Hoàn Tiền
+                            Trả Hàng &amp; Hoàn Tiền
                         </a>
                     </li>
                 </ul>
@@ -253,8 +282,13 @@
     <div class="border-top">
         <div class="container py-3">
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-center small text-secondary gap-2">
-                <span>© 2026 Creation Store. Tất cả các quyền được bảo lưu.</span>
-                <span>Việt Nam | Singapore | Thái Lan | Malaysia | Philippines</span>
+                <span>
+                    © 2026 Creation Store. Tất cả các quyền được bảo lưu.
+                </span>
+
+                <span>
+                    Việt Nam | Singapore | Thái Lan | Malaysia | Philippines
+                </span>
             </div>
         </div>
     </div>
@@ -262,6 +296,29 @@
 
 @code {
     private string Keyword { get; set; } = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        UserStateService.OnChange += HandleUserStateChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await UserStateService.GetProfileAsync();
+        }
+    }
+
+    private void HandleUserStateChanged()
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private async Task HandleLogout()
+    {
+        await UserStateService.LogoutAsync();
+    }
 
     private void HandleSearch()
     {
@@ -274,5 +331,10 @@
         var keyword = Uri.EscapeDataString(Keyword.Trim());
 
         NavigationManager.NavigateTo($"/products?keyword={keyword}");
+    }
+
+    public void Dispose()
+    {
+        UserStateService.OnChange -= HandleUserStateChanged;
     }
 }

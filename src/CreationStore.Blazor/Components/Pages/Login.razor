@@ -1,0 +1,87 @@
+@page "/login"
+@using CreationStore.Blazor.DTOs.Auth
+@using CreationStore.Blazor.Services
+@inject UserStateService UserStateService
+
+<PageTitle>Đăng nhập</PageTitle>
+
+<div class="row justify-content-center">
+    <div class="col-md-5">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h4 class="mb-0">Đăng nhập</h4>
+            </div>
+
+            <div class="card-body">
+                @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+                {
+                    <div class="alert alert-danger">
+                        @ErrorMessage
+                    </div>
+                }
+
+                <EditForm Model="LoginModel" OnValidSubmit="HandleLogin">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Username / Email / Số điện thoại
+                        </label>
+
+                        <InputText class="form-control"
+                                   @bind-Value="LoginModel.LoginIdentifier" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Mật khẩu
+                        </label>
+
+                        <InputText class="form-control"
+                                   type="password"
+                                   @bind-Value="LoginModel.Password" />
+                    </div>
+
+                    <button type="submit"
+                            class="btn btn-danger w-100"
+                            disabled="@IsLoading">
+                        @(IsLoading ? "Đang đăng nhập..." : "Đăng nhập")
+                    </button>
+                </EditForm>
+
+                <div class="mt-3 text-center">
+                    <span>Chưa có tài khoản?</span>
+                    <a href="/register">Đăng ký</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private LoginDTO LoginModel { get; set; } = new();
+
+    private bool IsLoading { get; set; }
+
+    private string? ErrorMessage { get; set; }
+
+    private async Task HandleLogin()
+    {
+        IsLoading = true;
+        ErrorMessage = null;
+
+        try
+        {
+            await UserStateService.LoginAsync(LoginModel);
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+}

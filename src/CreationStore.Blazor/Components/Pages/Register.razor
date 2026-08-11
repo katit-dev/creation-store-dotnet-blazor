@@ -1,0 +1,121 @@
+@page "/register"
+@using CreationStore.Blazor.DTOs.Auth
+@using CreationStore.Blazor.Services
+@inject UserStateService UserStateService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Đăng ký</PageTitle>
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h4 class="mb-0">Đăng ký tài khoản</h4>
+            </div>
+
+            <div class="card-body">
+                @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+                {
+                    <div class="alert alert-danger">
+                        @ErrorMessage
+                    </div>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(SuccessMessage))
+                {
+                    <div class="alert alert-success">
+                        @SuccessMessage
+                    </div>
+                }
+
+                <EditForm Model="RegisterModel" OnValidSubmit="HandleRegister">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+
+                    <div class="mb-3">
+                        <label class="form-label">Username</label>
+
+                        <InputText class="form-control"
+                                   @bind-Value="RegisterModel.Username" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Mật khẩu</label>
+
+                        <InputText class="form-control"
+                                   type="password"
+                                   @bind-Value="RegisterModel.Password" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Họ tên</label>
+
+                        <InputText class="form-control"
+                                   @bind-Value="RegisterModel.FullName" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+
+                        <InputText class="form-control"
+                                   @bind-Value="RegisterModel.Email" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Số điện thoại</label>
+
+                        <InputText class="form-control"
+                                   @bind-Value="RegisterModel.Phone" />
+                    </div>
+
+                    <button type="submit"
+                            class="btn btn-danger w-100"
+                            disabled="@IsLoading">
+                        @(IsLoading ? "Đang đăng ký..." : "Đăng ký")
+                    </button>
+                </EditForm>
+
+                <div class="mt-3 text-center">
+                    <span>Đã có tài khoản?</span>
+                    <a href="/login">Đăng nhập</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private RegisterDTO RegisterModel { get; set; } = new();
+
+    private bool IsLoading { get; set; }
+
+    private string? ErrorMessage { get; set; }
+
+    private string? SuccessMessage { get; set; }
+
+    private async Task HandleRegister()
+    {
+        IsLoading = true;
+        ErrorMessage = null;
+        SuccessMessage = null;
+
+        try
+        {
+            await UserStateService.RegisterAsync(RegisterModel);
+
+            SuccessMessage = "Đăng ký thành công. Đang chuyển sang trang đăng nhập...";
+
+            await Task.Delay(800);
+
+            NavigationManager.NavigateTo("/login");
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+}

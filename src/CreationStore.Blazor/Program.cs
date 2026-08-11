@@ -1,5 +1,6 @@
 using CreationStore.Blazor.Components;
-
+using CreationStore.Blazor.Helpers;
+using CreationStore.Blazor.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services
@@ -17,6 +18,11 @@ builder.Services.AddScoped(sp =>
     sp.GetRequiredService<IHttpClientFactory>()
         .CreateClient("CreationStoreApi")
 );
+
+// DI TokenStorage
+// DI State
+builder.Services.AddScoped<TokenStorage>();
+builder.Services.AddScoped<UserStateService>();
 
 var app = builder.Build();
 
