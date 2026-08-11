@@ -12,49 +12,49 @@
             <div class="d-flex align-items-center gap-3">
                 <span>
                     <i class="fas fa-gift me-1"></i>
-                    Ưu đãi 20% cho đơn hàng đầu tiên
+                    20% off your first order
                 </span>
 
                 <span class="vr opacity-50"></span>
 
-                <span>Miễn phí giao hàng từ 200.000đ</span>
+                <span>Free shipping from 200,000đ</span>
             </div>
 
             <div class="d-flex align-items-center gap-3">
                 <a href="#" class="text-white text-decoration-none">
-                    <i class="far fa-bell me-1"></i>Thông báo
+                    <i class="far fa-bell me-1"></i>Notifications
                 </a>
 
                 <a href="#" class="text-white text-decoration-none">
-                    <i class="far fa-question-circle me-1"></i>Hỗ trợ
+                    <i class="far fa-question-circle me-1"></i>Support
                 </a>
 
                 <a href="#" class="text-white text-decoration-none">
-                    <i class="fas fa-globe me-1"></i>Tiếng Việt
+                    <i class="fas fa-globe me-1"></i>English
                 </a>
 
                 @if (UserStateService.IsAuthenticated)
                 {
                     <span>
                         <i class="fas fa-user-circle me-1"></i>
-                        @(UserStateService.CurrentUser?.Username ?? "Tài khoản")
+                        @(UserStateService.CurrentUser?.Username ?? "Account")
                     </span>
 
                     <button class="btn btn-sm cs-btn-outline"
                             @onclick="HandleLogout">
-                        Đăng xuất
+                        Logout
                     </button>
                 }
                 else
                 {
                     <a href="/login" class="text-white text-decoration-none">
-                        Đăng nhập
+                        Login
                     </a>
 
                     <span class="vr opacity-50"></span>
 
                     <a href="/register" class="text-white text-decoration-none">
-                        Đăng ký
+                        Register
                     </a>
                 }
             </div>
@@ -79,7 +79,7 @@
                 <div class="cs-search-box d-flex">
                     <input type="text"
                            class="form-control border-0 shadow-none"
-                           placeholder="Tìm sản phẩm trong Creation Store"
+                           placeholder="Search products in Creation Store"
                            @bind="Keyword"
                            @bind:event="oninput" />
 
@@ -99,7 +99,7 @@
                 </div>
 
                 <div class="d-none d-md-block">
-                    <div>Giỏ hàng</div>
+                    <div>Cart</div>
                     <div class="small cs-muted">0đ</div>
                 </div>
             </a>
@@ -109,19 +109,19 @@
     <nav class="cs-navbar text-white">
         <div class="container d-flex align-items-center gap-5 py-2">
             <a href="/" class="text-white text-decoration-none py-2">
-                <i class="fas fa-home me-2"></i>Trang chủ
+                <i class="fas fa-home me-2"></i>Home
             </a>
 
             <a href="/products" class="text-white text-decoration-none py-2">
-                <i class="fas fa-gift me-2"></i>Sản phẩm
+                <i class="fas fa-gift me-2"></i>Products
             </a>
 
             <a href="/cart" class="text-white text-decoration-none py-2">
-                <i class="fas fa-shopping-cart me-2"></i>Giỏ hàng
+                <i class="fas fa-shopping-cart me-2"></i>Cart
             </a>
 
             <a href="/my-orders" class="text-white text-decoration-none py-2">
-                <i class="fas fa-cube me-2"></i>Đơn hàng của tôi
+                <i class="fas fa-cube me-2"></i>My Orders
             </a>
 
             @if (UserStateService.IsAdmin)
@@ -148,46 +148,69 @@
                     <div class="cs-logo-box">
                         <i class="fas fa-store"></i>
                     </div>
+
                     <h5 class="mb-0">Creation Store</h5>
                 </div>
 
                 <p class="cs-muted">
-                    Cung cấp các sản phẩm số chất lượng, uy tín và giá tốt nhất cho bạn.
+                    We provide high-quality digital products with reliable service and competitive prices.
                 </p>
 
                 <div class="d-flex gap-3">
-                    <a href="#" class="text-white"><i class="fab fa-facebook"></i></a>
-                    <a href="#" class="text-white"><i class="fab fa-instagram"></i></a>
-                    <a href="#" class="text-white"><i class="fab fa-youtube"></i></a>
-                    <a href="#" class="text-white"><i class="far fa-envelope"></i></a>
+                    <a href="#" class="text-white">
+                        <i class="fab fa-facebook"></i>
+                    </a>
+
+                    <a href="#" class="text-white">
+                        <i class="fab fa-instagram"></i>
+                    </a>
+
+                    <a href="#" class="text-white">
+                        <i class="fab fa-youtube"></i>
+                    </a>
+
+                    <a href="#" class="text-white">
+                        <i class="far fa-envelope"></i>
+                    </a>
                 </div>
             </div>
 
             <div class="col-md-2">
-                <h6>Về chúng tôi</h6>
+                <h6>About Us</h6>
+
                 <ul class="list-unstyled cs-muted small">
-                    <li class="mb-2">Giới thiệu</li>
-                    <li class="mb-2">Điều khoản sử dụng</li>
-                    <li class="mb-2">Chính sách bảo mật</li>
-                    <li class="mb-2">Liên hệ</li>
+                    <li class="mb-2">Introduction</li>
+                    <li class="mb-2">Terms of Service</li>
+                    <li class="mb-2">Privacy Policy</li>
+                    <li class="mb-2">Contact</li>
                 </ul>
             </div>
 
             <div class="col-md-3">
-                <h6>Hỗ trợ</h6>
+                <h6>Support</h6>
+
                 <ul class="list-unstyled cs-muted small">
-                    <li class="mb-2">Hướng dẫn mua hàng</li>
-                    <li class="mb-2">Hình thức thanh toán</li>
-                    <li class="mb-2">Chính sách đổi trả</li>
-                    <li class="mb-2">Câu hỏi thường gặp</li>
+                    <li class="mb-2">Shopping Guide</li>
+                    <li class="mb-2">Payment Methods</li>
+                    <li class="mb-2">Return Policy</li>
+                    <li class="mb-2">FAQ</li>
                 </ul>
             </div>
 
             <div class="col-md-3">
-                <h6>Liên hệ</h6>
-                <p class="cs-muted small mb-2">Email: support@creationstore.vn</p>
-                <p class="cs-muted small mb-2">Hotline: 0123 456 789</p>
-                <p class="cs-muted small mb-0">Thời gian: 8:00 - 22:00</p>
+                <h6>Contact</h6>
+
+                <p class="cs-muted small mb-2">
+                    Email: support&#64;creationstore.vn
+                </p>
+
+                <p class="cs-muted small mb-2">
+                    Hotline: 0123 456 789
+                </p>
+
+                <p class="cs-muted small mb-0">
+                    Working hours: 8:00 - 22:00
+                </p>
             </div>
         </div>
 
@@ -232,6 +255,7 @@
         }
 
         var keyword = Uri.EscapeDataString(Keyword.Trim());
+
         NavigationManager.NavigateTo($"/products?keyword={keyword}");
     }
 

@@ -5,7 +5,7 @@
 
 @inject UserStateService UserStateService
 
-<PageTitle>Đăng nhập</PageTitle>
+<PageTitle>Login</PageTitle>
 
 <div class="row justify-content-center">
     <div class="col-12 col-md-7 col-lg-5">
@@ -13,15 +13,15 @@
         <div class="cs-card cs-auth-card p-4 p-md-5">
             <div class="mb-4">
                 <h2 class="cs-auth-title mb-2">
-                    Đăng nhập
+                    Login
                 </h2>
 
                 <p class="cs-muted mb-0">
-                    Chưa có tài khoản?
+                    Don't have an account?
                     <a href="/register"
                        class="text-decoration-none"
                        style="color:#ff6f8e">
-                        Đăng ký ngay
+                        Register now
                     </a>
                 </p>
             </div>
@@ -38,7 +38,7 @@
 
                 <div class="mb-3">
                     <label class="form-label">
-                        Username / Email / Số điện thoại
+                        Username / Email / Phone
                     </label>
 
                     <div class="input-group">
@@ -47,7 +47,7 @@
                         </span>
 
                         <InputText class="form-control cs-input"
-                                   placeholder="Nhập username, email hoặc số điện thoại"
+                                   placeholder="Enter username, email or phone"
                                    @bind-Value="LoginModel.LoginIdentifier" />
                     </div>
 
@@ -56,7 +56,7 @@
 
                 <div class="mb-3">
                     <label class="form-label">
-                        Mật khẩu
+                        Password
                     </label>
 
                     <div class="input-group">
@@ -66,7 +66,7 @@
 
                         <InputText class="form-control cs-input"
                                    type="password"
-                                   placeholder="Nhập mật khẩu"
+                                   placeholder="Enter password"
                                    @bind-Value="LoginModel.Password" />
                     </div>
 
@@ -81,14 +81,14 @@
 
                         <label class="form-check-label cs-muted"
                                for="rememberMe">
-                            Ghi nhớ đăng nhập
+                            Remember me
                         </label>
                     </div>
 
                     <a href="#"
                        class="text-decoration-none"
                        style="color:#ff6f8e">
-                        Quên mật khẩu?
+                        Forgot password?
                     </a>
                 </div>
 
@@ -99,31 +99,30 @@
                     {
                         <span>
                             <span class="spinner-border spinner-border-sm me-2"></span>
-                            Đang đăng nhập...
+                            Logging in...
                         </span>
                     }
                     else
                     {
-                        <span>Đăng nhập</span>
+                        <span>Login</span>
                     }
                 </button>
             </EditForm>
 
             <div class="mt-4 text-center">
                 <p class="cs-muted small mb-0">
-                    Bằng việc đăng nhập, bạn đồng ý với
+                    By logging in, you agree to our
                     <a href="#"
                        class="text-decoration-none"
                        style="color:#ff6f8e">
-                        Điều khoản sử dụng
+                        Terms of Service
                     </a>
-                    và
+                    and
                     <a href="#"
                        class="text-decoration-none"
                        style="color:#ff6f8e">
-                        Chính sách bảo mật
-                    </a>
-                    của chúng tôi.
+                        Privacy Policy
+                    </a>.
                 </p>
             </div>
         </div>

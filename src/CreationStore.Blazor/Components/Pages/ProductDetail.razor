@@ -6,21 +6,24 @@
 @inject ProductStateService ProductStateService
 @inject NavigationManager NavigationManager
 
-<PageTitle>Chi tiết sản phẩm</PageTitle>
+<PageTitle>Product Detail</PageTitle>
 
 @if (IsLoading)
 {
     <div class="cs-card p-5 text-center">
         <div class="spinner-border text-light mb-3"></div>
+
         <p class="cs-muted mb-0">
-            Đang tải chi tiết sản phẩm...
+            Loading product details...
         </p>
     </div>
 }
 else if (!string.IsNullOrWhiteSpace(ErrorMessage))
 {
     <div class="cs-card p-5 text-center">
-        <h4 class="mb-3">Không tìm thấy sản phẩm</h4>
+        <h4 class="mb-3">
+            Product not found
+        </h4>
 
         <p class="cs-muted">
             @ErrorMessage
@@ -28,40 +31,40 @@ else if (!string.IsNullOrWhiteSpace(ErrorMessage))
 
         <button class="btn cs-btn-primary"
                 @onclick="GoBackToProducts">
-            Quay lại danh sách sản phẩm
+            Back to Products
         </button>
     </div>
 }
 else if (Product == null)
 {
     <div class="cs-card p-5 text-center">
-        <h4>Không có dữ liệu sản phẩm</h4>
+        <h4>
+            No product data
+        </h4>
 
         <button class="btn cs-btn-primary mt-3"
                 @onclick="GoBackToProducts">
-            Quay lại
+            Back to Products
         </button>
     </div>
 }
 else
 {
-    <div class="row g-4">
+    <div class="row g-4 align-items-stretch">
         <div class="col-12">
             <button class="btn cs-btn-outline mb-3"
                     @onclick="GoBackToProducts">
                 <i class="fas fa-arrow-left me-1"></i>
-                Quay lại sản phẩm
+                Back to Products
             </button>
         </div>
 
         <div class="col-12 col-lg-6">
-            <div class="cs-card overflow-hidden">
-                <div class="ratio ratio-16x9 bg-dark">
-                    <img src="@GetImageUrl(Product.ImageUrl)"
-                         class="w-100 h-100"
-                         style="object-fit: cover;"
-                         alt="@Product.ProductName" />
-                </div>
+            <div class="cs-card h-100 overflow-hidden">
+                <img src="@GetImageUrl(Product.ImageUrl)"
+                     class="w-100 h-100"
+                     style="object-fit: cover; min-height: 430px;"
+                     alt="@Product.ProductName" />
             </div>
         </div>
 
@@ -83,7 +86,7 @@ else
 
                 <div class="mb-4">
                     <div class="cs-muted small">
-                        Giá sản phẩm
+                        Price
                     </div>
 
                     <div class="fw-bold display-6">
@@ -92,10 +95,10 @@ else
                 </div>
 
                 <div class="row g-3 mb-4">
-                    <div class="col-6">
+                    <div class="col-12 col-md-6">
                         <div class="cs-card p-3">
                             <div class="cs-muted small">
-                                Thời hạn
+                                Validity
                             </div>
 
                             <div class="fw-semibold">
@@ -104,35 +107,31 @@ else
                         </div>
                     </div>
 
-                    <div class="col-6">
+                    <div class="col-12 col-md-6">
                         <div class="cs-card p-3">
                             <div class="cs-muted small">
-                                Mã danh mục
+                                Category
                             </div>
 
                             <div class="fw-semibold">
-                                @Product.CategoryId
+                                @Product.CategoryName
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="d-flex gap-3">
+                <div class="d-flex flex-column flex-md-row gap-3">
                     <button class="btn cs-btn-primary flex-fill py-2"
-                            @onclick="HandleAddToCart">
+                            disabled>
                         <i class="fas fa-shopping-cart me-2"></i>
-                        Thêm vào giỏ hàng
+                        Add to Cart
                     </button>
 
                     <button class="btn cs-btn-outline flex-fill py-2"
                             @onclick="GoBackToProducts">
-                        Tiếp tục mua sắm
+                        Continue Shopping
                     </button>
                 </div>
-
-                <p class="cs-muted small mt-3 mb-0">
-                    Lưu ý: chức năng thêm vào giỏ hàng sẽ được làm ở bước tiếp theo.
-                </p>
             </div>
         </div>
     </div>
@@ -157,7 +156,7 @@ else
 
         if (Product == null)
         {
-            ErrorMessage = "Sản phẩm không tồn tại hoặc đã bị xóa.";
+            ErrorMessage = "The product does not exist or has been removed.";
         }
 
         IsLoading = false;
@@ -166,13 +165,6 @@ else
     private void GoBackToProducts()
     {
         NavigationManager.NavigateTo("/products");
-    }
-
-    private void HandleAddToCart()
-    {
-        // Bước tiếp theo mình sẽ làm CartStateService và gọi POST /api/cart/items.
-        // Tạm thời chưa xử lý add cart thật ở đây.
-        NavigationManager.NavigateTo("/cart");
     }
 
     private static string FormatCurrency(decimal price)
@@ -184,10 +176,10 @@ else
     {
         if (validityDays.HasValue)
         {
-            return $"{validityDays.Value} ngày";
+            return $"{validityDays.Value} days";
         }
 
-        return "Vĩnh viễn";
+        return "Lifetime";
     }
 
     private static string GetImageUrl(string? imageUrl)

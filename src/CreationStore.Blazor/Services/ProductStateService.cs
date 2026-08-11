@@ -29,17 +29,7 @@ namespace CreationStore.Blazor.Services
 
             try
             {
-                string url;
-
-                if (string.IsNullOrWhiteSpace(keyword))
-                {
-                    url = "api/products";
-                }
-                else
-                {
-                    var encodedKeyword = Uri.EscapeDataString(keyword.Trim());
-                    url = $"api/products/search?keyword={encodedKeyword}";
-                }
+                var url = BuildProductsUrl(keyword);
 
                 var response = await _httpClient.GetAsync(url);
 
@@ -52,7 +42,7 @@ namespace CreationStore.Blazor.Services
                     responseData.Content == null)
                 {
                     Products = new List<ProductResponseDTO>();
-                    ErrorMessage = responseData?.Message ?? "Không tải được sản phẩm.";
+                    ErrorMessage = responseData?.Message ?? "Failed to load products.";
                     return;
                 }
 
@@ -61,7 +51,7 @@ namespace CreationStore.Blazor.Services
             catch (Exception ex)
             {
                 Products = new List<ProductResponseDTO>();
-                ErrorMessage = $"Lỗi khi tải sản phẩm: {ex.Message}";
+                ErrorMessage = $"Error loading products: {ex.Message}";
             }
             finally
             {
@@ -74,7 +64,9 @@ namespace CreationStore.Blazor.Services
         {
             try
             {
-                var response = await _httpClient.GetAsync($"api/products/{productId}");
+                var response = await _httpClient.GetAsync(
+                    $"api/products/{productId}"
+                );
 
                 var responseData = await response.Content
                     .ReadFromJsonAsync<ResponseTypeDTO<ProductResponseDTO>>();
@@ -93,6 +85,18 @@ namespace CreationStore.Blazor.Services
             {
                 return null;
             }
+        }
+
+        private static string BuildProductsUrl(string? keyword)
+        {
+            if (string.IsNullOrWhiteSpace(keyword))
+            {
+                return "api/products";
+            }
+
+            var encodedKeyword = Uri.EscapeDataString(keyword.Trim());
+
+            return $"api/products/search?keyword={encodedKeyword}";
         }
 
         private void NotifyStateChanged()

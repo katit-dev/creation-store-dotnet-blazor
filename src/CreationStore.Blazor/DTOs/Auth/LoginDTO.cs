@@ -4,10 +4,10 @@ namespace CreationStore.Blazor.DTOs.Auth
 {
     public class LoginDTO
     {
-        [Required(ErrorMessage = "Vui lòng nhập username, email hoặc số điện thoại")]
+        [Required(ErrorMessage = "Please enter your username, email or phone")]
         public string LoginIdentifier { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Vui lòng nhập mật khẩu")]
+        [Required(ErrorMessage = "Please enter your password")]
         public string Password { get; set; } = string.Empty;
     }
 }

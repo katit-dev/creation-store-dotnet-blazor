@@ -55,7 +55,7 @@ namespace CreationStore.Blazor.Services
                 string.IsNullOrWhiteSpace(responseData.Content.Token))
             {
                 throw new Exception(
-                    responseData?.Message ?? "Đăng nhập thất bại"
+                    responseData?.Message ?? "Login failed"
                 );
             }
 
@@ -87,7 +87,7 @@ namespace CreationStore.Blazor.Services
                 responseData.StatusCode != 201)
             {
                 throw new Exception(
-                    responseData?.Message ?? "Đăng ký thất bại"
+                    responseData?.Message ?? "Registration failed"
                 );
             }
         }
@@ -112,8 +112,11 @@ namespace CreationStore.Blazor.Services
             if (!response.IsSuccessStatusCode)
             {
                 ClearUserState();
+
                 await _tokenStorage.RemoveTokenAsync();
+
                 NotifyStateChanged();
+
                 return;
             }
 

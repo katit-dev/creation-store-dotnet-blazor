@@ -24,16 +24,18 @@
                 </h1>
 
                 <p class="cs-muted mb-4">
-                    Mua sản phẩm số nhanh chóng, an toàn, hỗ trợ thanh toán VNPAY.
+                    Buy digital products quickly and securely with VNPAY payment support.
                 </p>
 
-                <button class="btn cs-btn-primary px-4" @onclick="ScrollToProducts">
-                    Xem sản phẩm
+                <button class="btn cs-btn-primary px-4"
+                        @onclick="ScrollToProducts">
+                    View Products
                 </button>
             </div>
 
             <div class="col-md-5 text-center">
-                <i class="fas fa-store fa-6x" style="color:#753041"></i>
+                <i class="fas fa-store fa-6x"
+                   style="color:#753041"></i>
             </div>
         </div>
     </div>
@@ -43,27 +45,28 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
             <h2 class="fw-bold mb-1">
-                Sản phẩm
+                Products
             </h2>
 
             <p class="cs-muted mb-0">
                 @if (string.IsNullOrWhiteSpace(Keyword))
                 {
-                    <span>Danh sách sản phẩm hiện có.</span>
+                    <span>Browse our available products.</span>
                 }
                 else
                 {
                     <span>
-                        Kết quả tìm kiếm cho:
+                        Search results for:
                         <strong>@Keyword</strong>
                     </span>
                 }
             </p>
         </div>
 
-        <button class="btn cs-btn-outline" @onclick="ReloadProducts">
+        <button class="btn cs-btn-outline"
+                @onclick="ReloadProducts">
             <i class="fas fa-sync-alt me-1"></i>
-            Tải lại
+            Reload
         </button>
     </div>
 
@@ -71,8 +74,9 @@
     {
         <div class="cs-card p-5 text-center">
             <div class="spinner-border text-light mb-3"></div>
+
             <p class="cs-muted mb-0">
-                Đang tải sản phẩm...
+                Loading products...
             </p>
         </div>
     }
@@ -85,9 +89,10 @@
     else if (ProductStateService.Products.Count == 0)
     {
         <div class="cs-card p-5 text-center">
-            <h5>Không có sản phẩm</h5>
+            <h5>No products found</h5>
+
             <p class="cs-muted mb-0">
-                Không tìm thấy sản phẩm phù hợp.
+                No matching products were found.
             </p>
         </div>
     }
@@ -98,11 +103,13 @@
             {
                 <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
                     <div class="cs-card h-100 overflow-hidden">
-
-                        <a href="@($"/products/{product.ProductId}")" class="text-decoration-none text-white">
+                        <a href="@($"/products/{product.ProductId}")"
+                           class="text-decoration-none text-white">
 
                             <div class="ratio ratio-16x9 bg-dark">
-                                <img src="@GetImageUrl(product.ImageUrl)" class="w-100 h-100" style="object-fit: cover;"
+                                <img src="@GetImageUrl(product.ImageUrl)"
+                                     class="w-100 h-100"
+                                     style="object-fit: cover;"
                                      alt="@product.ProductName" />
                             </div>
 
@@ -113,11 +120,13 @@
                                     </span>
                                 </div>
 
-                                <h6 class="fw-semibold mb-2 text-truncate" title="@product.ProductName">
+                                <h6 class="fw-semibold mb-2 text-truncate"
+                                    title="@product.ProductName">
                                     @product.ProductName
                                 </h6>
 
-                                <p class="cs-muted small mb-3" style="height: 40px; overflow: hidden;">
+                                <p class="cs-muted small mb-3"
+                                   style="height: 40px; overflow: hidden;">
                                     @product.Description
                                 </p>
 
@@ -127,18 +136,9 @@
                                             @FormatCurrency(product.Price)
                                         </div>
 
-                                        @if (product.ValidityDays.HasValue)
-                                        {
-                                            <div class="cs-muted small">
-                                                @product.ValidityDays ngày
-                                            </div>
-                                        }
-                                        else
-                                        {
-                                            <div class="cs-muted small">
-                                                Vĩnh viễn
-                                            </div>
-                                        }
+                                        <div class="cs-muted small">
+                                            @GetValidityText(product.ValidityDays)
+                                        </div>
                                     </div>
 
                                     <span class="btn cs-btn-primary btn-sm">
@@ -147,7 +147,6 @@
                                 </div>
                             </div>
                         </a>
-
                     </div>
                 </div>
             }
@@ -179,11 +178,6 @@
         await ProductStateService.LoadProductsAsync(Keyword);
     }
 
-    @* private void GoToDetail(int productId)
-    {
-        NavigationManager.NavigateTo($"/products/{productId}");
-    } *@
-
     private void ScrollToProducts()
     {
         NavigationManager.NavigateTo("/#product-section");
@@ -192,6 +186,16 @@
     private static string FormatCurrency(decimal price)
     {
         return price.ToString("#,##0") + "đ";
+    }
+
+    private static string GetValidityText(int? validityDays)
+    {
+        if (validityDays.HasValue)
+        {
+            return $"{validityDays.Value} days";
+        }
+
+        return "Lifetime";
     }
 
     private static string GetImageUrl(string? imageUrl)
