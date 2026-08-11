@@ -169,8 +169,6 @@
     [SupplyParameterFromQuery]
     public string? Keyword { get; set; }
 
-    private const string ApiBaseUrl = "http://localhost:5041";
-
     protected override void OnInitialized()
     {
         ProductStateService.OnChange += HandleProductStateChanged;
@@ -207,26 +205,26 @@
     }
 
     private static string GetImageUrl(string? imageUrl)
+{
+    if (string.IsNullOrWhiteSpace(imageUrl) ||
+        imageUrl.Equals("string", StringComparison.OrdinalIgnoreCase))
     {
-        if (string.IsNullOrWhiteSpace(imageUrl) ||
-            imageUrl.Equals("string", StringComparison.OrdinalIgnoreCase))
-        {
-            return "https://via.placeholder.com/400x220?text=No+Image";
-        }
-
-        if (imageUrl.StartsWith("http://") ||
-            imageUrl.StartsWith("https://"))
-        {
-            return imageUrl;
-        }
-
-        if (imageUrl.StartsWith("/"))
-        {
-            return $"{ApiBaseUrl}{imageUrl}";
-        }
-
         return "https://via.placeholder.com/400x220?text=No+Image";
     }
+
+    if (imageUrl.StartsWith("http://") ||
+        imageUrl.StartsWith("https://"))
+    {
+        return imageUrl;
+    }
+
+    if (imageUrl.StartsWith("/"))
+    {
+        return imageUrl;
+    }
+
+    return $"/images/{imageUrl}";
+}
 
     public void Dispose()
     {
