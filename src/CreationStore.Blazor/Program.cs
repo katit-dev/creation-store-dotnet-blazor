@@ -27,6 +27,7 @@ builder.Services.AddScoped<ProductStateService>();
 builder.Services.AddScoped<CartStateService>();
 builder.Services.AddScoped<CheckoutStateService>();
 builder.Services.AddScoped<OrderStateService>();
+builder.Services.AddScoped<AdminDashboardStateService>();
 
 var app = builder.Build();
 
