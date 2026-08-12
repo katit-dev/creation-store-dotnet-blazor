@@ -100,7 +100,7 @@ namespace CreationStore.Blazor.Services
             );
 
             var responseData = await response.Content
-                .ReadFromJsonAsync<ResponseTypeDTO<List<AdminRevenueDTO>>>();
+                .ReadFromJsonAsync<ResponseTypeDTO<AdminRevenueReportDTO>>();
 
             if (!response.IsSuccessStatusCode ||
                 responseData == null ||
@@ -112,7 +112,7 @@ namespace CreationStore.Blazor.Services
                 );
             }
 
-            RevenueItems = responseData.Content;
+            RevenueItems = responseData.Content.Items;
         }
 
         private async Task LoadTopProductsAsync(int take)
