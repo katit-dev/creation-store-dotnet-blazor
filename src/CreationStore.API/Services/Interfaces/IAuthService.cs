@@ -10,5 +10,7 @@ namespace CreationStore.API.Services.Interfaces
         Task<ResponseTypeDTO<LoginResponseDTO>> LoginAsync(LoginDTO dto);
 
         Task<ResponseTypeDTO<UserProfileDTO>> GetMeAsync();
+    
+        Task<ResponseTypeDTO<UserProfileDTO>> UpdateProfileAsync(UpdateProfileDTO updateProfileDto);
     }
 }

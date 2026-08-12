@@ -16,7 +16,6 @@ namespace CreationStore.API.Services.Implementations
         private readonly JwtAuthService _jwtAuthService;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
-
         public AuthService(
             CreationStoreDbContext context,
             JwtAuthService jwtAuthService,
@@ -72,8 +71,12 @@ namespace CreationStore.API.Services.Implementations
 
             var username = dto.Username.Trim();
             var fullName = dto.FullName.Trim();
-            var email = string.IsNullOrWhiteSpace(dto.Email) ? null : dto.Email.Trim();
-            var phone = string.IsNullOrWhiteSpace(dto.Phone) ? null : dto.Phone.Trim();
+            var email = string.IsNullOrWhiteSpace(dto.Email)
+                ? null
+                : dto.Email.Trim();
+            var phone = string.IsNullOrWhiteSpace(dto.Phone)
+                ? null
+                : dto.Phone.Trim();
 
             var usernameExists = await _context.Users
                 .AnyAsync(u => u.Username == username);
@@ -241,13 +244,9 @@ namespace CreationStore.API.Services.Implementations
 
         public async Task<ResponseTypeDTO<UserProfileDTO>> GetMeAsync()
         {
-            var userIdValue = _httpContextAccessor
-                .HttpContext?
-                .User
-                .FindFirst(ClaimTypes.NameIdentifier)?
-                .Value;
+            var userId = GetCurrentUserId();
 
-            if (!int.TryParse(userIdValue, out int userId))
+            if (userId == null)
             {
                 return new ResponseTypeDTO<UserProfileDTO>
                 {
@@ -261,7 +260,10 @@ namespace CreationStore.API.Services.Implementations
                 .AsNoTracking()
                 .Include(u => u.UserRoles)
                     .ThenInclude(ur => ur.Role)
-                .FirstOrDefaultAsync(u => u.UserId == userId && u.IsActive);
+                .FirstOrDefaultAsync(u =>
+                    u.UserId == userId.Value &&
+                    u.IsActive
+                );
 
             if (user == null)
             {
@@ -277,17 +279,138 @@ namespace CreationStore.API.Services.Implementations
             {
                 StatusCode = 200,
                 Message = "Get profile successfully",
-                Content = new UserProfileDTO
+                Content = MapToUserProfileDTO(user)
+            };
+        }
+
+        public async Task<ResponseTypeDTO<UserProfileDTO>> UpdateProfileAsync(
+            UpdateProfileDTO updateProfileDto
+        )
+        {
+            var userId = GetCurrentUserId();
+
+            if (userId == null)
+            {
+                return new ResponseTypeDTO<UserProfileDTO>
                 {
-                    UserId = user.UserId,
-                    Username = user.Username,
-                    FullName = user.FullName,
-                    Email = user.Email,
-                    Phone = user.Phone,
-                    Roles = user.UserRoles
-                        .Select(ur => ur.Role.RoleName)
-                        .ToList()
+                    StatusCode = 401,
+                    Message = "Invalid token",
+                    Content = null
+                };
+            }
+
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u =>
+                    u.UserId == userId.Value &&
+                    u.IsActive
+                );
+
+            if (user == null)
+            {
+                return new ResponseTypeDTO<UserProfileDTO>
+                {
+                    StatusCode = 404,
+                    Message = "User not found",
+                    Content = null
+                };
+            }
+
+            var fullName = NormalizeText(updateProfileDto.FullName);
+            var email = NormalizeText(updateProfileDto.Email);
+            var phone = NormalizeText(updateProfileDto.Phone);
+
+            if (!string.IsNullOrWhiteSpace(email))
+            {
+                var emailExists = await _context.Users
+                    .AnyAsync(u =>
+                        u.UserId != userId.Value &&
+                        u.Email == email
+                    );
+
+                if (emailExists)
+                {
+                    return new ResponseTypeDTO<UserProfileDTO>
+                    {
+                        StatusCode = 409,
+                        Message = "Email already exists",
+                        Content = null
+                    };
                 }
+            }
+
+            if (!string.IsNullOrWhiteSpace(phone))
+            {
+                var phoneExists = await _context.Users
+                    .AnyAsync(u =>
+                        u.UserId != userId.Value &&
+                        u.Phone == phone
+                    );
+
+                if (phoneExists)
+                {
+                    return new ResponseTypeDTO<UserProfileDTO>
+                    {
+                        StatusCode = 409,
+                        Message = "Phone already exists",
+                        Content = null
+                    };
+                }
+            }
+
+            user.FullName = fullName;
+            user.Email = email;
+            user.Phone = phone;
+
+            await _context.SaveChangesAsync();
+
+            var profileResponse = await GetMeAsync();
+
+            if (profileResponse.StatusCode == 200)
+            {
+                profileResponse.Message = "Profile updated successfully";
+            }
+
+            return profileResponse;
+        }
+
+        private int? GetCurrentUserId()
+        {
+            var userIdValue = _httpContextAccessor
+                .HttpContext?
+                .User
+                .FindFirst(ClaimTypes.NameIdentifier)?
+                .Value;
+
+            if (!int.TryParse(userIdValue, out int userId))
+            {
+                return null;
+            }
+
+            return userId;
+        }
+
+        private static string? NormalizeText(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return null;
+            }
+
+            return value.Trim();
+        }
+
+        private static UserProfileDTO MapToUserProfileDTO(User user)
+        {
+            return new UserProfileDTO
+            {
+                UserId = user.UserId,
+                Username = user.Username,
+                FullName = user.FullName,
+                Email = user.Email,
+                Phone = user.Phone,
+                Roles = user.UserRoles
+                    .Select(ur => ur.Role.RoleName)
+                    .ToList()
             };
         }
     }

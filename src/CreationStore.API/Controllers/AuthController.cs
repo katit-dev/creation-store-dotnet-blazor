@@ -19,8 +19,8 @@ namespace CreationStore.API.Controllers
         {
             _authService = authService;
         }
-        
-         // POST: api/auth/register
+
+        // POST: api/auth/register
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDTO dto)
         {
@@ -48,7 +48,14 @@ namespace CreationStore.API.Controllers
             return StatusCode(result.StatusCode, result);
         }
 
+        [HttpPut("me")]
+        [Authorize]
+        public async Task<IActionResult> UpdateProfile(UpdateProfileDTO updateProfileDto)
+        {
+            var response = await _authService.UpdateProfileAsync(updateProfileDto);
 
-        
+            return StatusCode(response.StatusCode, response);
+        }
+
     }
 }
