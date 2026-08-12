@@ -18,7 +18,7 @@
         </h2>
 
         <p class="cs-muted mb-0">
-            View your account information and roles.
+            View and update your account information.
         </p>
     </div>
 
@@ -79,6 +79,20 @@ else
 {
     ProfileUserDTO user = UserStateService.CurrentUser;
 
+    @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+    {
+        <div class="alert alert-danger">
+            @ErrorMessage
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(SuccessMessage))
+    {
+        <div class="alert alert-success">
+            @SuccessMessage
+        </div>
+    }
+
     <div class="row g-4">
         <div class="col-12 col-lg-4">
             <div class="cs-card p-4 text-center h-100">
@@ -107,105 +121,212 @@ else
 
         <div class="col-12 col-lg-8">
             <div class="cs-card p-4">
-                <h4 class="fw-bold mb-4">
-                    Account Information
-                </h4>
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="fw-bold mb-0">
+                        Account Information
+                    </h4>
 
-                <div class="row g-3">
-                    <div class="col-12 col-md-6">
-                        <div class="cs-info-box">
-                            <div class="cs-muted small">
-                                Username
+                    @if (!IsEditMode)
+                    {
+                        <button type="button"
+                                class="btn cs-btn-cart"
+                                @onclick="StartEdit">
+                            Edit Profile
+                        </button>
+                    }
+                </div>
+
+                @if (IsEditMode)
+                {
+                    <EditForm Model="EditModel" OnValidSubmit="SaveProfile">
+                        <DataAnnotationsValidator />
+
+                        <div class="row g-3">
+                            <div class="col-12 col-md-6">
+                                <label class="form-label">
+                                    Username
+                                </label>
+
+                                <input class="form-control cs-input"
+                                       value="@user.Username"
+                                       disabled />
                             </div>
 
-                            <div class="fw-semibold mt-1">
-                                @DisplayText(user.Username)
-                            </div>
-                        </div>
-                    </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label">
+                                    Full Name
+                                </label>
 
-                    <div class="col-12 col-md-6">
-                        <div class="cs-info-box">
-                            <div class="cs-muted small">
-                                Full Name
-                            </div>
+                                <InputText class="form-control cs-input"
+                                           placeholder="Enter full name"
+                                           @bind-Value="EditModel.FullName" />
 
-                            <div class="fw-semibold mt-1">
-                                @DisplayText(user.FullName)
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-12 col-md-6">
-                        <div class="cs-info-box">
-                            <div class="cs-muted small">
-                                Email
+                                <ValidationMessage For="@(() => EditModel.FullName)" />
                             </div>
 
-                            <div class="fw-semibold mt-1">
-                                @DisplayText(user.Email)
-                            </div>
-                        </div>
-                    </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label">
+                                    Email
+                                </label>
 
-                    <div class="col-12 col-md-6">
-                        <div class="cs-info-box">
-                            <div class="cs-muted small">
-                                Phone
-                            </div>
+                                <InputText class="form-control cs-input"
+                                           placeholder="Enter email"
+                                           @bind-Value="EditModel.Email" />
 
-                            <div class="fw-semibold mt-1">
-                                @DisplayText(user.Phone)
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-12">
-                        <div class="cs-info-box">
-                            <div class="cs-muted small mb-2">
-                                Roles
+                                <ValidationMessage For="@(() => EditModel.Email)" />
                             </div>
 
-                            @if (user.Roles.Count == 0)
-                            {
-                                <span class="cs-muted">
-                                    No roles
-                                </span>
-                            }
-                            else
-                            {
-                                <div class="d-flex flex-wrap gap-2">
-                                    @foreach (string role in user.Roles)
-                                    {
-                                        <span class="@GetRoleClass(role)">
-                                            @role
-                                        </span>
-                                    }
+                            <div class="col-12 col-md-6">
+                                <label class="form-label">
+                                    Phone
+                                </label>
+
+                                <InputText class="form-control cs-input"
+                                           placeholder="Enter phone number"
+                                           @bind-Value="EditModel.Phone" />
+
+                                <ValidationMessage For="@(() => EditModel.Phone)" />
+                            </div>
+
+                            <div class="col-12">
+                                <div class="cs-info-box">
+                                    <div class="cs-muted small mb-2">
+                                        Roles
+                                    </div>
+
+                                    <div class="d-flex flex-wrap gap-2">
+                                        @foreach (string role in user.Roles)
+                                        {
+                                            <span class="@GetRoleClass(role)">
+                                                @role
+                                            </span>
+                                        }
+                                    </div>
                                 </div>
-                            }
+                            </div>
+                        </div>
+
+                        <div class="d-flex flex-column flex-md-row gap-3 mt-4">
+                            <button type="submit"
+                                    class="btn cs-btn-cart flex-fill py-2"
+                                    disabled="@IsSaving">
+                                @if (IsSaving)
+                                {
+                                    <span>Saving...</span>
+                                }
+                                else
+                                {
+                                    <span>Save Changes</span>
+                                }
+                            </button>
+
+                            <button type="button"
+                                    class="btn cs-btn-outline flex-fill py-2"
+                                    disabled="@IsSaving"
+                                    @onclick="CancelEdit">
+                                Cancel
+                            </button>
+                        </div>
+                    </EditForm>
+                }
+                else
+                {
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6">
+                            <div class="cs-info-box">
+                                <div class="cs-muted small">
+                                    Username
+                                </div>
+
+                                <div class="fw-semibold mt-1">
+                                    @DisplayText(user.Username)
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <div class="cs-info-box">
+                                <div class="cs-muted small">
+                                    Full Name
+                                </div>
+
+                                <div class="fw-semibold mt-1">
+                                    @DisplayText(user.FullName)
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <div class="cs-info-box">
+                                <div class="cs-muted small">
+                                    Email
+                                </div>
+
+                                <div class="fw-semibold mt-1">
+                                    @DisplayText(user.Email)
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <div class="cs-info-box">
+                                <div class="cs-muted small">
+                                    Phone
+                                </div>
+
+                                <div class="fw-semibold mt-1">
+                                    @DisplayText(user.Phone)
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="cs-info-box">
+                                <div class="cs-muted small mb-2">
+                                    Roles
+                                </div>
+
+                                @if (user.Roles.Count == 0)
+                                {
+                                    <span class="cs-muted">
+                                        No roles
+                                    </span>
+                                }
+                                else
+                                {
+                                    <div class="d-flex flex-wrap gap-2">
+                                        @foreach (string role in user.Roles)
+                                        {
+                                            <span class="@GetRoleClass(role)">
+                                                @role
+                                            </span>
+                                        }
+                                    </div>
+                                }
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="d-flex flex-column flex-md-row gap-3 mt-4">
-                    <button type="button"
-                            class="btn cs-btn-detail flex-fill py-2"
-                            @onclick="GoToMyOrders">
-                        View My Orders
-                    </button>
+                    <div class="d-flex flex-column flex-md-row gap-3 mt-4">
+                        <button type="button"
+                                class="btn cs-btn-detail flex-fill py-2"
+                                @onclick="GoToMyOrders">
+                            View My Orders
+                        </button>
 
-                    <button type="button"
-                            class="btn cs-btn-outline flex-fill py-2"
-                            @onclick="ReloadProfile">
-                        Reload Profile
-                    </button>
+                        <button type="button"
+                                class="btn cs-btn-outline flex-fill py-2"
+                                @onclick="ReloadProfile">
+                            Reload Profile
+                        </button>
 
-                    <button type="button"
-                            class="btn cs-btn-cart flex-fill py-2"
-                            @onclick="Logout">
-                        Logout
-                    </button>
-                </div>
+                        <button type="button"
+                                class="btn cs-btn-cart flex-fill py-2"
+                                @onclick="Logout">
+                            Logout
+                        </button>
+                    </div>
+                }
             </div>
         </div>
     </div>
@@ -213,6 +334,16 @@ else
 
 @code {
     private bool HasCheckedAuth { get; set; }
+
+    private bool IsEditMode { get; set; }
+
+    private bool IsSaving { get; set; }
+
+    private string? ErrorMessage { get; set; }
+
+    private string? SuccessMessage { get; set; }
+
+    private UpdateProfileDTO EditModel { get; set; } = new();
 
     protected override void OnInitialized()
     {
@@ -227,6 +358,8 @@ else
 
             HasCheckedAuth = true;
 
+            InitEditModel();
+
             await InvokeAsync(StateHasChanged);
         }
     }
@@ -236,14 +369,83 @@ else
         _ = InvokeAsync(StateHasChanged);
     }
 
+    private void StartEdit()
+    {
+        ErrorMessage = null;
+        SuccessMessage = null;
+
+        InitEditModel();
+
+        IsEditMode = true;
+    }
+
+    private void CancelEdit()
+    {
+        ErrorMessage = null;
+        SuccessMessage = null;
+
+        InitEditModel();
+
+        IsEditMode = false;
+    }
+
+    private async Task SaveProfile()
+    {
+        IsSaving = true;
+        ErrorMessage = null;
+        SuccessMessage = null;
+
+        try
+        {
+            await UserStateService.UpdateProfileAsync(EditModel);
+
+            SuccessMessage = "Profile updated successfully.";
+
+            InitEditModel();
+
+            IsEditMode = false;
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            IsSaving = false;
+        }
+    }
+
     private async Task ReloadProfile()
     {
+        ErrorMessage = null;
+        SuccessMessage = null;
+
         await UserStateService.GetProfileAsync();
+
+        InitEditModel();
     }
 
     private async Task Logout()
     {
         await UserStateService.LogoutAsync();
+    }
+
+    private void InitEditModel()
+    {
+        var user = UserStateService.CurrentUser;
+
+        if (user == null)
+        {
+            EditModel = new UpdateProfileDTO();
+            return;
+        }
+
+        EditModel = new UpdateProfileDTO
+        {
+            FullName = user.FullName,
+            Email = user.Email,
+            Phone = user.Phone
+        };
     }
 
     private void GoToLogin()
