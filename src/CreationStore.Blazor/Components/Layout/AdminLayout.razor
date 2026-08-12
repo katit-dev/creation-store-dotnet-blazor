@@ -1,0 +1,156 @@
+@inherits LayoutComponentBase
+
+@using CreationStore.Blazor.Components.Shared
+@using CreationStore.Blazor.Services
+
+@inject UserStateService UserStateService
+@inject NavigationManager NavigationManager
+
+<div class="cs-admin-shell">
+    <aside class="cs-admin-sidebar">
+        <div class="cs-admin-brand">
+            <div class="cs-admin-brand-icon">
+                <i class="fas fa-store"></i>
+            </div>
+
+            <div>
+                <div class="cs-admin-brand-title">
+                    Creation Store
+                </div>
+
+                <div class="cs-admin-brand-subtitle">
+                    ADMIN
+                </div>
+            </div>
+        </div>
+
+        <nav class="cs-admin-menu">
+            <button type="button"
+                    class="@GetMenuClass("/admin/dashboard")"
+                    @onclick='() => NavigateTo("/admin/dashboard")'>
+                <i class="fas fa-home"></i>
+                <span>Dashboard</span>
+            </button>
+
+            <button type="button"
+                    class="@GetMenuClass("/admin/products")"
+                    @onclick='() => NavigateTo("/admin/products")'>
+                <i class="fas fa-box"></i>
+                <span>Products</span>
+            </button>
+
+            <button type="button"
+                    class="@GetMenuClass("/admin/categories")"
+                    @onclick='() => NavigateTo("/admin/categories")'>
+                <i class="fas fa-th-large"></i>
+                <span>Categories</span>
+            </button>
+
+            <button type="button"
+                    class="@GetMenuClass("/admin/orders")"
+                    @onclick='() => NavigateTo("/admin/orders")'>
+                <i class="fas fa-shopping-cart"></i>
+                <span>Orders</span>
+            </button>
+
+            <button type="button"
+                    class="@GetMenuClass("/admin/users")"
+                    @onclick='() => NavigateTo("/admin/users")'>
+                <i class="fas fa-users"></i>
+                <span>Users</span>
+            </button>
+
+            <button type="button"
+                    class="@GetMenuClass("/admin/payments")"
+                    @onclick='() => NavigateTo("/admin/payments")'>
+                <i class="fas fa-credit-card"></i>
+                <span>Payments</span>
+            </button>
+        </nav>
+
+        <div class="cs-admin-sidebar-footer">
+            <button type="button"
+                    class="cs-admin-menu-link"
+                    @onclick='() => NavigateTo("/")'>
+                <i class="fas fa-arrow-left"></i>
+                <span>Back to Store</span>
+            </button>
+        </div>
+    </aside>
+
+    <section class="cs-admin-main">
+        <header class="cs-admin-topbar">
+            <div>
+                <div class="cs-admin-topbar-title">
+                    Admin Panel
+                </div>
+
+                <div class="cs-admin-topbar-subtitle">
+                    Manage your store operations
+                </div>
+            </div>
+
+            <div class="cs-admin-user">
+                <div class="cs-admin-avatar">
+                    @GetAdminAvatarText()
+                </div>
+
+                <div class="d-none d-md-block">
+                    <div class="fw-semibold">
+                        @(UserStateService.CurrentUser?.Username ?? "Admin")
+                    </div>
+
+                    <div class="cs-muted small">
+                        Administrator
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="cs-admin-content">
+            <AdminGuard>
+                @Body
+            </AdminGuard>
+        </main>
+    </section>
+</div>
+
+@code {
+    private void NavigateTo(string url)
+    {
+        NavigationManager.NavigateTo(url);
+    }
+
+    private string GetMenuClass(string url)
+    {
+        var currentUrl = NavigationManager.ToBaseRelativePath(
+            NavigationManager.Uri
+        );
+
+        if (!currentUrl.StartsWith("/"))
+        {
+            currentUrl = "/" + currentUrl;
+        }
+
+        var isActive = currentUrl.StartsWith(
+            url,
+            StringComparison.OrdinalIgnoreCase
+        );
+
+        return isActive
+            ? "cs-admin-menu-link active"
+            : "cs-admin-menu-link";
+    }
+
+    private string GetAdminAvatarText()
+    {
+        var username = UserStateService.CurrentUser?.Username;
+
+        if (string.IsNullOrWhiteSpace(username))
+        {
+            return "A";
+        }
+
+        return username.Trim()[0].ToString().ToUpper();
+    }
+}
