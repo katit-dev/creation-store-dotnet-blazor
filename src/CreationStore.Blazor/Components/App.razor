@@ -1,49 +1,40 @@
-﻿
-@using static Microsoft.AspNetCore.Components.Web.RenderMode
+﻿@using static Microsoft.AspNetCore.Components.Web.RenderMode
 
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
-    <meta charset="utf-8" />
+      <meta charset="utf-8" />
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <base href="/" />
+      <base href="/" />
 
-    <link rel="icon"
-          type="image/png"
-          href="favicon.png" />
+      <link rel="icon" type="image/png" href="favicon.png" />
 
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet"
-          href="bootstrap/bootstrap.min.css" />
+      <!-- Bootstrap CSS -->
+      <link rel="stylesheet" href="bootstrap/bootstrap.min.css" />
 
-    <!-- CSS isolation generated file -->
-    <link rel="stylesheet"
-          href="CreationStore.Blazor.styles.css" />
+      <!-- CSS isolation generated file -->
+      <link rel="stylesheet" href="CreationStore.Blazor.styles.css" />
 
-    <!-- FontAwesome 5 -->
-    <link rel="stylesheet"
-          href="https://use.fontawesome.com/releases/v5.1.1/css/all.css"
-          crossorigin="anonymous" />
+      <!-- FontAwesome 5 -->
+      <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.1/css/all.css" crossorigin="anonymous" />
 
-    <!-- Custom CSS của mình để sau cùng -->
-    <link rel="stylesheet"
-          href="app.css?v=3" />
+      <!-- Custom CSS của mình để sau cùng -->
+      <link rel="stylesheet" href="app.css?v=4" />
 
-    <HeadOutlet @rendermode="InteractiveServer" />
+      <HeadOutlet @rendermode="InteractiveServer" />
 </head>
 
 <body>
-    <Routes @rendermode="InteractiveServer" />
+      <Routes @rendermode="InteractiveServer" />
 
-    <!-- Bootstrap JS -->
-    <script src="bootstrap/bootstrap.bundle.min.js"></script>
+      <!-- Bootstrap JS -->
+      <script src="bootstrap/bootstrap.bundle.min.js"></script>
 
-    <!-- Blazor Web App script -->
-    <script src="_framework/blazor.web.js"></script>
+      <!-- Blazor Web App script -->
+      <script src="_framework/blazor.web.js"></script>
 </body>
 
 </html>

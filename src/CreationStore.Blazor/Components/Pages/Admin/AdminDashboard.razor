@@ -15,17 +15,15 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h2 class="fw-bold mb-1">
-            Hello, Admin!
+            Dashboard Overview
         </h2>
 
         <p class="cs-muted mb-0">
-            Monitor store performance, revenue, products and recent orders.
+            Monitor revenue, orders, products and recent activities.
         </p>
     </div>
 
-    <button type="button"
-            class="btn cs-btn-outline"
-            @onclick="ReloadDashboard">
+    <button type="button" class="btn cs-btn-outline" @onclick="ReloadDashboard">
         Reload
     </button>
 </div>
@@ -37,8 +35,7 @@
                 From date
             </label>
 
-            <InputDate class="form-control cs-input"
-                       @bind-Value="FromDate" />
+            <InputDate class="form-control cs-input" @bind-Value="FromDate" />
         </div>
 
         <div class="col-12 col-md-4">
@@ -46,14 +43,11 @@
                 To date
             </label>
 
-            <InputDate class="form-control cs-input"
-                       @bind-Value="ToDate" />
+            <InputDate class="form-control cs-input" @bind-Value="ToDate" />
         </div>
 
         <div class="col-12 col-md-4">
-            <button type="button"
-                    class="btn cs-btn-cart w-100"
-                    disabled="@AdminDashboardStateService.IsLoading"
+            <button type="button" class="btn cs-btn-cart w-100" disabled="@AdminDashboardStateService.IsLoading"
                     @onclick="ReloadDashboard">
                 Apply Filter
             </button>
@@ -432,9 +426,7 @@ else
                 Recent Orders
             </h4>
 
-            <button type="button"
-                    class="btn cs-btn-cart"
-                    @onclick="GoToAdminOrders">
+            <button type="button" class="btn cs-btn-cart" @onclick="GoToAdminOrders">
                 View All Orders
             </button>
         </div>
@@ -496,8 +488,7 @@ else
                                 </td>
 
                                 <td class="text-end">
-                                    <button type="button"
-                                            class="btn cs-btn-detail btn-sm"
+                                    <button type="button" class="btn cs-btn-detail btn-sm"
                                             @onclick="() => GoToAdminOrderDetail(order.OrderId)">
                                         View Detail
                                     </button>

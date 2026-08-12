@@ -496,3 +496,30 @@ header a:hover {
         align-items: flex-start;
     }
 }
+
+/* =========================
+   fix admin dashboard
+========================= */
+.cs-admin-topbar-title {
+    font-size: 1.45rem;
+    font-weight: 800;
+}
+
+.cs-admin-topbar-subtitle {
+    font-size: 1rem;
+    color: #A7A1A3;
+}
+
+.cs-admin-user .fw-semibold {
+    font-size: 1.1rem;
+}
+
+.cs-admin-user .small {
+    font-size: 0.95rem !important;
+}
+
+.cs-admin-avatar {
+    width: 52px;
+    height: 52px;
+    font-size: 1.1rem;
+}
