@@ -1,0 +1,333 @@
+@page "/my-orders"
+
+@using CreationStore.Blazor.DTOs.Orders
+@using CreationStore.Blazor.Services
+
+@implements IDisposable
+
+@inject UserStateService UserStateService
+@inject OrderStateService OrderStateService
+@inject NavigationManager NavigationManager
+
+<PageTitle>My Orders</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1">
+            My Orders
+        </h2>
+
+        <p class="cs-muted mb-0">
+            Track your orders and payment status.
+        </p>
+    </div>
+
+    <button type="button"
+            class="btn cs-btn-outline"
+            @onclick="ContinueShopping">
+        Continue Shopping
+    </button>
+</div>
+
+@if (!HasCheckedAuth)
+{
+    <div class="cs-card p-5 text-center">
+        <div class="spinner-border text-light mb-3"></div>
+
+        <p class="cs-muted mb-0">
+            Checking your account...
+        </p>
+    </div>
+}
+else if (!UserStateService.IsAuthenticated)
+{
+    <div class="cs-card p-5 text-center">
+        <h4 class="mb-3">
+            Please login
+        </h4>
+
+        <p class="cs-muted">
+            You need to login before viewing your orders.
+        </p>
+
+        <button type="button"
+                class="btn cs-btn-primary"
+                @onclick="GoToLogin">
+            Login
+        </button>
+    </div>
+}
+else if (OrderStateService.IsLoading)
+{
+    <div class="cs-card p-5 text-center">
+        <div class="spinner-border text-light mb-3"></div>
+
+        <p class="cs-muted mb-0">
+            Loading orders...
+        </p>
+    </div>
+}
+else
+{
+    @if (!string.IsNullOrWhiteSpace(OrderStateService.ErrorMessage))
+    {
+        <div class="alert alert-danger">
+            @OrderStateService.ErrorMessage
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(OrderStateService.SuccessMessage))
+    {
+        <div class="alert alert-success">
+            @OrderStateService.SuccessMessage
+        </div>
+    }
+
+    @if (OrderStateService.Orders.Count == 0)
+    {
+        <div class="cs-card p-5 text-center">
+            <h4 class="mb-3">
+                No orders found
+            </h4>
+
+            <p class="cs-muted">
+                You have not placed any orders yet.
+            </p>
+
+            <button type="button"
+                    class="btn cs-btn-primary"
+                    @onclick="ContinueShopping">
+                Browse Products
+            </button>
+        </div>
+    }
+    else
+    {
+        <div class="cs-card p-3 p-md-4">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover align-middle mb-0 cs-order-table">
+                    <thead>
+                        <tr>
+                            <th>Order</th>
+                            <th>Date</th>
+                            <th>Total</th>
+                            <th>Order Status</th>
+                            <th>Payment Status</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach (OrderResponseDTO order in OrderStateService.Orders)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold">
+                                        #@order.OrderId
+                                    </div>
+
+                                    <div class="cs-muted small">
+                                        @GetItemCountText(order)
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <div>
+                                        @FormatDate(order.OrderDate)
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <div class="fw-semibold">
+                                        @FormatCurrency(order.TotalAmount)
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <span class="@GetOrderStatusClass(order.Status)">
+                                        @order.Status
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <span class="@GetPaymentStatusClass(order.PaymentStatus)">
+                                        @order.PaymentStatus
+                                    </span>
+                                </td>
+
+                                <td class="text-end">
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <button type="button"
+                                                class="btn cs-btn-detail btn-sm"
+                                                @onclick="() => GoToOrderDetail(order.OrderId)">
+                                            View Detail
+                                        </button>
+
+                                        @if (CanPayAgain(order))
+                                        {
+                                            <button type="button"
+                                                    class="btn cs-btn-cart btn-sm"
+                                                    disabled="@OrderStateService.IsLoading"
+                                                    @onclick="() => PayAgain(order.OrderId)">
+                                                Pay Again
+                                            </button>
+                                        }
+
+                                        @if (CanCancel(order))
+                                        {
+                                            <button type="button"
+                                                    class="btn cs-btn-outline btn-sm"
+                                                    disabled="@OrderStateService.IsLoading"
+                                                    @onclick="() => CancelOrder(order.OrderId)">
+                                                Cancel
+                                            </button>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+}
+
+@code {
+    private bool HasCheckedAuth { get; set; }
+
+    protected override void OnInitialized()
+    {
+        UserStateService.OnChange += HandleUserStateChanged;
+        OrderStateService.OnChange += HandleOrderStateChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await UserStateService.GetProfileAsync();
+
+            HasCheckedAuth = true;
+
+            if (UserStateService.IsAuthenticated)
+            {
+                await OrderStateService.LoadMyOrdersAsync();
+            }
+
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void HandleUserStateChanged()
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleOrderStateChanged()
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private async Task PayAgain(int orderId)
+    {
+        await OrderStateService.PayAgainAsync(orderId);
+    }
+
+    private async Task CancelOrder(int orderId)
+    {
+        await OrderStateService.CancelOrderAsync(orderId);
+    }
+
+    private void GoToOrderDetail(int orderId)
+    {
+        NavigationManager.NavigateTo($"/my-orders/{orderId}");
+    }
+
+    private void ContinueShopping()
+    {
+        NavigationManager.NavigateTo("/products");
+    }
+
+    private void GoToLogin()
+    {
+        NavigationManager.NavigateTo("/login");
+    }
+
+    private static bool CanPayAgain(OrderResponseDTO order)
+    {
+        return order.Status.Equals(
+            "PendingPayment",
+            StringComparison.OrdinalIgnoreCase
+        );
+    }
+
+    private static bool CanCancel(OrderResponseDTO order)
+    {
+        return order.Status.Equals(
+            "PendingPayment",
+            StringComparison.OrdinalIgnoreCase
+        );
+    }
+
+    private static string GetItemCountText(OrderResponseDTO order)
+    {
+        var itemCount = order.Items?.Sum(item => item.Quantity) ?? 0;
+
+        if (itemCount <= 0)
+        {
+            return "No items";
+        }
+
+        if (itemCount == 1)
+        {
+            return "1 item";
+        }
+
+        return $"{itemCount} items";
+    }
+
+    private static string FormatCurrency(decimal price)
+    {
+        return price.ToString("#,##0") + "đ";
+    }
+
+    private static string FormatDate(DateTime dateTime)
+    {
+        return dateTime.ToString("dd/MM/yyyy HH:mm");
+    }
+
+    private static string GetOrderStatusClass(string status)
+    {
+        var baseClass = "badge cs-status-badge ";
+
+        return status.ToLower() switch
+        {
+            "pendingpayment" => baseClass + "cs-status-warning",
+            "paid" => baseClass + "cs-status-success",
+            "completed" => baseClass + "cs-status-success",
+            "cancelled" => baseClass + "cs-status-danger",
+            _ => baseClass + "cs-status-muted"
+        };
+    }
+
+    private static string GetPaymentStatusClass(string status)
+    {
+        var baseClass = "badge cs-status-badge ";
+
+        return status.ToLower() switch
+        {
+            "pending" => baseClass + "cs-status-warning",
+            "succeeded" => baseClass + "cs-status-success",
+            "failed" => baseClass + "cs-status-danger",
+            "cancelled" => baseClass + "cs-status-danger",
+            _ => baseClass + "cs-status-muted"
+        };
+    }
+
+    public void Dispose()
+    {
+        UserStateService.OnChange -= HandleUserStateChanged;
+        OrderStateService.OnChange -= HandleOrderStateChanged;
+    }
+}

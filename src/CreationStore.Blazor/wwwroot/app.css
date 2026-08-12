@@ -192,3 +192,45 @@ header a:hover {
     border-radius: 8px;
     font-weight: 700;
 }
+
+.cs-order-table {
+    --bs-table-bg: transparent;
+    --bs-table-border-color: #2B2224;
+}
+
+.cs-order-table th {
+    color: #A7A1A3;
+    font-weight: 600;
+    border-bottom: 1px solid #2B2224;
+}
+
+.cs-order-table td {
+    color: #FFFFFF;
+    border-bottom: 1px solid #2B2224;
+}
+
+.cs-status-badge {
+    padding: 0.45rem 0.65rem;
+    border-radius: 999px;
+    font-weight: 600;
+}
+
+.cs-status-warning {
+    background: #5A3B16 !important;
+    color: #FFD38A !important;
+}
+
+.cs-status-success {
+    background: #123D2A !important;
+    color: #8DFFBE !important;
+}
+
+.cs-status-danger {
+    background: #4A1E2A !important;
+    color: #FF9CAF !important;
+}
+
+.cs-status-muted {
+    background: #2B2224 !important;
+    color: #A7A1A3 !important;
+}
