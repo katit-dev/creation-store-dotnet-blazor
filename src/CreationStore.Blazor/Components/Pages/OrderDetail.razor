@@ -1,0 +1,464 @@
+@page "/my-orders/{OrderId:int}"
+
+@using CreationStore.Blazor.DTOs.Orders
+@using CreationStore.Blazor.Services
+
+@implements IDisposable
+
+@inject UserStateService UserStateService
+@inject OrderStateService OrderStateService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Order Detail</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1">
+            Order Detail
+        </h2>
+
+        <p class="cs-muted mb-0">
+            View your order information and payment status.
+        </p>
+    </div>
+
+    <button type="button"
+            class="btn cs-btn-outline"
+            @onclick="GoBackToOrders">
+        Back to My Orders
+    </button>
+</div>
+
+@if (!HasCheckedAuth)
+{
+    <div class="cs-card p-5 text-center">
+        <div class="spinner-border text-light mb-3"></div>
+
+        <p class="cs-muted mb-0">
+            Checking your account...
+        </p>
+    </div>
+}
+else if (!UserStateService.IsAuthenticated)
+{
+    <div class="cs-card p-5 text-center">
+        <h4 class="mb-3">
+            Please login
+        </h4>
+
+        <p class="cs-muted">
+            You need to login before viewing this order.
+        </p>
+
+        <button type="button"
+                class="btn cs-btn-primary"
+                @onclick="GoToLogin">
+            Login
+        </button>
+    </div>
+}
+else if (OrderStateService.IsLoading)
+{
+    <div class="cs-card p-5 text-center">
+        <div class="spinner-border text-light mb-3"></div>
+
+        <p class="cs-muted mb-0">
+            Loading order detail...
+        </p>
+    </div>
+}
+else if (!string.IsNullOrWhiteSpace(OrderStateService.ErrorMessage))
+{
+    <div class="alert alert-danger">
+        @OrderStateService.ErrorMessage
+    </div>
+
+    <div class="cs-card p-5 text-center">
+        <h4 class="mb-3">
+            Order not found
+        </h4>
+
+        <p class="cs-muted">
+            The order does not exist or you do not have permission to view it.
+        </p>
+
+        <button type="button"
+                class="btn cs-btn-primary"
+                @onclick="GoBackToOrders">
+            Back to My Orders
+        </button>
+    </div>
+}
+else if (OrderStateService.SelectedOrder == null)
+{
+    <div class="cs-card p-5 text-center">
+        <h4 class="mb-3">
+            No order data
+        </h4>
+
+        <button type="button"
+                class="btn cs-btn-primary"
+                @onclick="GoBackToOrders">
+            Back to My Orders
+        </button>
+    </div>
+}
+else
+{
+    OrderResponseDTO order = OrderStateService.SelectedOrder;
+
+    @if (!string.IsNullOrWhiteSpace(OrderStateService.SuccessMessage))
+    {
+        <div class="alert alert-success">
+            @OrderStateService.SuccessMessage
+        </div>
+    }
+
+    <div class="row g-4">
+        <div class="col-12 col-lg-8">
+            <div class="cs-card p-4 mb-4">
+                <div class="d-flex justify-content-between align-items-start mb-4">
+                    <div>
+                        <h4 class="fw-bold mb-1">
+                            Order #@order.OrderId
+                        </h4>
+
+                        <p class="cs-muted mb-0">
+                            Created at @FormatDate(order.OrderDate)
+                        </p>
+                    </div>
+
+                    <span class="@GetOrderStatusClass(order.Status)">
+                        @order.Status
+                    </span>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <div class="cs-info-box">
+                            <div class="cs-muted small">
+                                Payment Status
+                            </div>
+
+                            <div class="mt-2">
+                                <span class="@GetPaymentStatusClass(order.PaymentStatus)">
+                                    @order.PaymentStatus
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <div class="cs-info-box">
+                            <div class="cs-muted small">
+                                Total Amount
+                            </div>
+
+                            <div class="fw-bold fs-4 mt-1">
+                                @FormatCurrency(order.TotalAmount)
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(order.Note))
+                    {
+                        <div class="col-12">
+                            <div class="cs-info-box">
+                                <div class="cs-muted small">
+                                    Note
+                                </div>
+
+                                <div class="mt-1">
+                                    @order.Note
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(order.CancelReason))
+                    {
+                        <div class="col-12">
+                            <div class="cs-info-box">
+                                <div class="cs-muted small">
+                                    Cancel Reason
+                                </div>
+
+                                <div class="mt-1">
+                                    @order.CancelReason
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="cs-card p-4">
+                <h4 class="fw-bold mb-4">
+                    Order Items
+                </h4>
+
+                @if (order.Items == null || order.Items.Count == 0)
+                {
+                    <p class="cs-muted mb-0">
+                        This order has no items.
+                    </p>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover align-middle mb-0 cs-order-table">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th class="text-center">Quantity</th>
+                                    <th class="text-end">Unit Price</th>
+                                    <th class="text-end">Subtotal</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                @foreach (OrderItemResponseDTO item in order.Items)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="fw-semibold">
+                                                @item.ProductName
+                                            </div>
+
+                                            <div class="cs-muted small">
+                                                Product ID: @item.ProductId
+                                            </div>
+                                        </td>
+
+                                        <td class="text-center">
+                                            @item.Quantity
+                                        </td>
+
+                                        <td class="text-end">
+                                            @FormatCurrency(item.UnitPrice)
+                                        </td>
+
+                                        <td class="text-end fw-semibold">
+                                            @FormatCurrency(item.SubTotal)
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-4">
+            <div class="cs-card p-4">
+                <h4 class="fw-bold mb-4">
+                    Order Summary
+                </h4>
+
+                <div class="d-flex justify-content-between mb-3">
+                    <span class="cs-muted">Order ID</span>
+                    <span>#@order.OrderId</span>
+                </div>
+
+                <div class="d-flex justify-content-between mb-3">
+                    <span class="cs-muted">Items</span>
+                    <span>@GetItemCountText(order)</span>
+                </div>
+
+                <div class="d-flex justify-content-between mb-3">
+                    <span class="cs-muted">Order Status</span>
+                    <span>@order.Status</span>
+                </div>
+
+                <div class="d-flex justify-content-between mb-3">
+                    <span class="cs-muted">Payment Status</span>
+                    <span>@order.PaymentStatus</span>
+                </div>
+
+                <hr />
+
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <span class="fw-bold">Total</span>
+
+                    <span class="fw-bold fs-4">
+                        @FormatCurrency(order.TotalAmount)
+                    </span>
+                </div>
+
+                @if (CanPayAgain(order))
+                {
+                    <button type="button"
+                            class="btn cs-btn-cart w-100 py-2 mb-3"
+                            disabled="@OrderStateService.IsLoading"
+                            @onclick="PayAgain">
+                        Pay Again
+                    </button>
+                }
+
+                @if (CanCancel(order))
+                {
+                    <button type="button"
+                            class="btn cs-btn-outline w-100 py-2 mb-3"
+                            disabled="@OrderStateService.IsLoading"
+                            @onclick="CancelOrder">
+                        Cancel Order
+                    </button>
+                }
+
+                <button type="button"
+                        class="btn cs-btn-detail w-100 py-2"
+                        @onclick="ContinueShopping">
+                    Continue Shopping
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int OrderId { get; set; }
+
+    private bool HasCheckedAuth { get; set; }
+
+    protected override void OnInitialized()
+    {
+        UserStateService.OnChange += HandleUserStateChanged;
+        OrderStateService.OnChange += HandleOrderStateChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await UserStateService.GetProfileAsync();
+
+            HasCheckedAuth = true;
+
+            if (UserStateService.IsAuthenticated)
+            {
+                await OrderStateService.GetOrderByIdAsync(OrderId);
+            }
+
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void HandleUserStateChanged()
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleOrderStateChanged()
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private async Task PayAgain()
+    {
+        await OrderStateService.PayAgainAsync(OrderId);
+    }
+
+    private async Task CancelOrder()
+    {
+        var success = await OrderStateService.CancelOrderAsync(OrderId);
+
+        if (success)
+        {
+            await OrderStateService.GetOrderByIdAsync(OrderId);
+        }
+    }
+
+    private void GoBackToOrders()
+    {
+        NavigationManager.NavigateTo("/my-orders");
+    }
+
+    private void ContinueShopping()
+    {
+        NavigationManager.NavigateTo("/products");
+    }
+
+    private void GoToLogin()
+    {
+        NavigationManager.NavigateTo("/login");
+    }
+
+    private static bool CanPayAgain(OrderResponseDTO order)
+    {
+        return order.Status.Equals(
+            "PendingPayment",
+            StringComparison.OrdinalIgnoreCase
+        );
+    }
+
+    private static bool CanCancel(OrderResponseDTO order)
+    {
+        return order.Status.Equals(
+            "PendingPayment",
+            StringComparison.OrdinalIgnoreCase
+        );
+    }
+
+    private static string GetItemCountText(OrderResponseDTO order)
+    {
+        var itemCount = order.Items?.Sum(item => item.Quantity) ?? 0;
+
+        if (itemCount <= 0)
+        {
+            return "No items";
+        }
+
+        if (itemCount == 1)
+        {
+            return "1 item";
+        }
+
+        return $"{itemCount} items";
+    }
+
+    private static string FormatCurrency(decimal price)
+    {
+        return price.ToString("#,##0") + "đ";
+    }
+
+    private static string FormatDate(DateTime dateTime)
+    {
+        return dateTime.ToString("dd/MM/yyyy HH:mm");
+    }
+
+    private static string GetOrderStatusClass(string status)
+    {
+        var baseClass = "badge cs-status-badge ";
+
+        return status.ToLower() switch
+        {
+            "pendingpayment" => baseClass + "cs-status-warning",
+            "paid" => baseClass + "cs-status-success",
+            "completed" => baseClass + "cs-status-success",
+            "cancelled" => baseClass + "cs-status-danger",
+            _ => baseClass + "cs-status-muted"
+        };
+    }
+
+    private static string GetPaymentStatusClass(string status)
+    {
+        var baseClass = "badge cs-status-badge ";
+
+        return status.ToLower() switch
+        {
+            "pending" => baseClass + "cs-status-warning",
+            "succeeded" => baseClass + "cs-status-success",
+            "failed" => baseClass + "cs-status-danger",
+            "cancelled" => baseClass + "cs-status-danger",
+            _ => baseClass + "cs-status-muted"
+        };
+    }
+
+    public void Dispose()
+    {
+        UserStateService.OnChange -= HandleUserStateChanged;
+        OrderStateService.OnChange -= HandleOrderStateChanged;
+    }
+}
