@@ -436,3 +436,63 @@ header a:hover {
         display: none;
     }
 }
+
+/* =========================
+   dashboard visualization styles
+========================= */
+.cs-admin-stat-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: linear-gradient(180deg, #C94A68 0%, #753041 100%);
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    box-shadow: 0 0 16px rgba(201, 74, 104, 0.28);
+}
+
+.cs-admin-donut-wrap {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
+
+.cs-admin-donut {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    background: conic-gradient(
+        #FFD38A 0deg 90deg,
+        #8DFFBE 90deg 190deg,
+        #C94A68 190deg 300deg,
+        #FF9CAF 300deg 360deg
+    );
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cs-admin-donut-center {
+    width: 104px;
+    height: 104px;
+    border-radius: 50%;
+    background: #120E10;
+    border: 1px solid #2B2224;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.cs-admin-donut-legend {
+    flex: 1;
+}
+
+@media (max-width: 768px) {
+    .cs-admin-donut-wrap {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
