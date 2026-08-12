@@ -137,6 +137,48 @@ namespace CreationStore.Blazor.Services
             NotifyStateChanged();
         }
 
+        public async Task UpdateProfileAsync(UpdateProfileDTO updateProfileDto)
+        {
+            var token = AccessToken;
+
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                token = await _tokenStorage.GetTokenAsync() ?? string.Empty;
+            }
+
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                throw new Exception("Please login before updating your profile.");
+            }
+
+            AccessToken = token;
+
+            SetAuthorizationHeader(token);
+
+            var response = await _httpClient.PutAsJsonAsync(
+                "api/auth/me",
+                updateProfileDto
+            );
+
+            var responseData = await response.Content
+                .ReadFromJsonAsync<ResponseTypeDTO<ProfileUserDTO>>();
+
+            if (!response.IsSuccessStatusCode ||
+                responseData == null ||
+                responseData.StatusCode < 200 ||
+                responseData.StatusCode >= 300 ||
+                responseData.Content == null)
+            {
+                throw new Exception(
+                    responseData?.Message ?? "Failed to update profile."
+                );
+            }
+
+            CurrentUser = responseData.Content;
+
+            NotifyStateChanged();
+        }
+
         public async Task LogoutAsync()
         {
             ClearUserState();
