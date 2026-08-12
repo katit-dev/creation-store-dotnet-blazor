@@ -1,0 +1,309 @@
+@page "/account"
+@page "/profile"
+
+@using CreationStore.Blazor.DTOs.Auth
+@using CreationStore.Blazor.Services
+
+@implements IDisposable
+
+@inject UserStateService UserStateService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Account</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1">
+            My Account
+        </h2>
+
+        <p class="cs-muted mb-0">
+            View your account information and roles.
+        </p>
+    </div>
+
+    <button type="button"
+            class="btn cs-btn-outline"
+            @onclick="ContinueShopping">
+        Continue Shopping
+    </button>
+</div>
+
+@if (!HasCheckedAuth)
+{
+    <div class="cs-card p-5 text-center">
+        <div class="spinner-border text-light mb-3"></div>
+
+        <p class="cs-muted mb-0">
+            Checking your account...
+        </p>
+    </div>
+}
+else if (!UserStateService.IsAuthenticated)
+{
+    <div class="cs-card p-5 text-center">
+        <h4 class="mb-3">
+            Please login
+        </h4>
+
+        <p class="cs-muted">
+            You need to login before viewing your account.
+        </p>
+
+        <button type="button"
+                class="btn cs-btn-primary"
+                @onclick="GoToLogin">
+            Login
+        </button>
+    </div>
+}
+else if (UserStateService.CurrentUser == null)
+{
+    <div class="cs-card p-5 text-center">
+        <h4 class="mb-3">
+            Account not found
+        </h4>
+
+        <p class="cs-muted">
+            We could not load your account information.
+        </p>
+
+        <button type="button"
+                class="btn cs-btn-primary"
+                @onclick="ReloadProfile">
+            Reload
+        </button>
+    </div>
+}
+else
+{
+    ProfileUserDTO user = UserStateService.CurrentUser;
+
+    <div class="row g-4">
+        <div class="col-12 col-lg-4">
+            <div class="cs-card p-4 text-center h-100">
+                <div class="cs-account-avatar mx-auto mb-3">
+                    @GetAvatarText(user)
+                </div>
+
+                <h4 class="fw-bold mb-1">
+                    @GetDisplayName(user)
+                </h4>
+
+                <p class="cs-muted mb-3">
+                    @user.Username
+                </p>
+
+                <div class="d-flex justify-content-center flex-wrap gap-2">
+                    @foreach (string role in user.Roles)
+                    {
+                        <span class="badge cs-badge-cart">
+                            @role
+                        </span>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-8">
+            <div class="cs-card p-4">
+                <h4 class="fw-bold mb-4">
+                    Account Information
+                </h4>
+
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <div class="cs-info-box">
+                            <div class="cs-muted small">
+                                Username
+                            </div>
+
+                            <div class="fw-semibold mt-1">
+                                @DisplayText(user.Username)
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <div class="cs-info-box">
+                            <div class="cs-muted small">
+                                Full Name
+                            </div>
+
+                            <div class="fw-semibold mt-1">
+                                @DisplayText(user.FullName)
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <div class="cs-info-box">
+                            <div class="cs-muted small">
+                                Email
+                            </div>
+
+                            <div class="fw-semibold mt-1">
+                                @DisplayText(user.Email)
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <div class="cs-info-box">
+                            <div class="cs-muted small">
+                                Phone
+                            </div>
+
+                            <div class="fw-semibold mt-1">
+                                @DisplayText(user.Phone)
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="cs-info-box">
+                            <div class="cs-muted small mb-2">
+                                Roles
+                            </div>
+
+                            @if (user.Roles.Count == 0)
+                            {
+                                <span class="cs-muted">
+                                    No roles
+                                </span>
+                            }
+                            else
+                            {
+                                <div class="d-flex flex-wrap gap-2">
+                                    @foreach (string role in user.Roles)
+                                    {
+                                        <span class="@GetRoleClass(role)">
+                                            @role
+                                        </span>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-column flex-md-row gap-3 mt-4">
+                    <button type="button"
+                            class="btn cs-btn-detail flex-fill py-2"
+                            @onclick="GoToMyOrders">
+                        View My Orders
+                    </button>
+
+                    <button type="button"
+                            class="btn cs-btn-outline flex-fill py-2"
+                            @onclick="ReloadProfile">
+                        Reload Profile
+                    </button>
+
+                    <button type="button"
+                            class="btn cs-btn-cart flex-fill py-2"
+                            @onclick="Logout">
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool HasCheckedAuth { get; set; }
+
+    protected override void OnInitialized()
+    {
+        UserStateService.OnChange += HandleUserStateChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await UserStateService.GetProfileAsync();
+
+            HasCheckedAuth = true;
+
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void HandleUserStateChanged()
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private async Task ReloadProfile()
+    {
+        await UserStateService.GetProfileAsync();
+    }
+
+    private async Task Logout()
+    {
+        await UserStateService.LogoutAsync();
+    }
+
+    private void GoToLogin()
+    {
+        NavigationManager.NavigateTo("/login");
+    }
+
+    private void GoToMyOrders()
+    {
+        NavigationManager.NavigateTo("/my-orders");
+    }
+
+    private void ContinueShopping()
+    {
+        NavigationManager.NavigateTo("/products");
+    }
+
+    private static string DisplayText(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return "Not provided";
+        }
+
+        return value;
+    }
+
+    private static string GetDisplayName(ProfileUserDTO user)
+    {
+        if (!string.IsNullOrWhiteSpace(user.FullName))
+        {
+            return user.FullName;
+        }
+
+        return user.Username;
+    }
+
+    private static string GetAvatarText(ProfileUserDTO user)
+    {
+        var displayName = GetDisplayName(user);
+
+        if (string.IsNullOrWhiteSpace(displayName))
+        {
+            return "U";
+        }
+
+        return displayName.Trim()[0].ToString().ToUpper();
+    }
+
+    private static string GetRoleClass(string role)
+    {
+        var baseClass = "badge cs-status-badge ";
+
+        return role.Equals("Admin", StringComparison.OrdinalIgnoreCase)
+            ? baseClass + "cs-status-warning"
+            : baseClass + "cs-status-success";
+    }
+
+    public void Dispose()
+    {
+        UserStateService.OnChange -= HandleUserStateChanged;
+    }
+}

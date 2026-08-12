@@ -35,10 +35,10 @@
 
                 @if (UserStateService.IsAuthenticated)
                 {
-                    <span>
+                    <a href="/account" class="text-white text-decoration-none">
                         <i class="fas fa-user-circle me-1"></i>
                         @(UserStateService.CurrentUser?.Username ?? "Account")
-                    </span>
+                    </a>
 
                     <button class="btn btn-sm cs-btn-outline" @onclick="HandleLogout">
                         Logout

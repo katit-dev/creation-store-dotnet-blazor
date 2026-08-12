@@ -241,3 +241,18 @@ header a:hover {
     border-radius: 12px;
     padding: 1rem;
 }
+
+/* CSS cho avatar(Profile) */
+.cs-account-avatar {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    background: linear-gradient(180deg, #C94A68 0%, #753041 100%);
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.4rem;
+    font-weight: 800;
+    box-shadow: 0 0 20px rgba(201, 74, 104, 0.35);
+}
