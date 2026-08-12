@@ -1,6 +1,7 @@
 using CreationStore.API.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Globalization;
 
 namespace CreationStore.API.Controllers
 {
@@ -9,10 +10,15 @@ namespace CreationStore.API.Controllers
     public class PaymentController : ControllerBase
     {
         private readonly IPaymentService _paymentService;
+        private readonly IConfiguration _configuration;
 
-        public PaymentController(IPaymentService paymentService)
+        public PaymentController(
+            IPaymentService paymentService,
+            IConfiguration configuration
+        )
         {
             _paymentService = paymentService;
+            _configuration = configuration;
         }
 
         // ============================================================
@@ -51,14 +57,71 @@ namespace CreationStore.API.Controllers
         // Vì request này đến từ VNPAY/browser redirect,
         // không có JWT token của user.
         // ============================================================
-        [AllowAnonymous]
         [HttpGet("vnpay-return")]
+        [AllowAnonymous]
         public async Task<IActionResult> VnPayReturn()
         {
-            var result = await _paymentService
-                .HandleVnPayReturnAsync(Request.Query);
+            var response = await _paymentService.HandleVnPayReturnAsync(Request.Query);
 
-            return StatusCode(result.StatusCode, result);
+            if (response.Content == null)
+            {
+                var failedUrl = BuildPaymentResultUrl(
+                    status: "failed",
+                    orderId: null,
+                    paymentTransactionId: null,
+                    amount: null,
+                    message: response.Message ?? "Payment failed"
+                );
+
+                return Redirect(failedUrl);
+            }
+
+            var result = response.Content;
+
+            var status = result.IsSuccess ? "success" : "failed";
+
+            var transaction = result.Transaction;
+
+            var redirectUrl = BuildPaymentResultUrl(
+                status: status,
+                orderId: transaction?.OrderId,
+                paymentTransactionId: transaction?.PaymentTransactionId,
+                amount: transaction?.Amount,
+                message: result.Message ?? response.Message
+            );
+
+            return Redirect(redirectUrl);
+        }
+
+        private string BuildPaymentResultUrl(string status, int? orderId, int? paymentTransactionId, decimal? amount, string? message)
+        {
+            var frontendBaseUrl =
+                _configuration["Frontend:BaseUrl"]?.TrimEnd('/');
+
+            if (string.IsNullOrWhiteSpace(frontendBaseUrl))
+            {
+                frontendBaseUrl = "http://localhost:5000";
+            }
+
+            var queryParams = new Dictionary<string, string?>
+            {
+                ["status"] = status,
+                ["orderId"] = orderId?.ToString(),
+                ["paymentTransactionId"] = paymentTransactionId?.ToString(),
+                ["amount"] = amount?.ToString(CultureInfo.InvariantCulture),
+                ["message"] = message
+            };
+
+            var queryString = string.Join(
+                "&",
+                queryParams
+                    .Where(item => !string.IsNullOrWhiteSpace(item.Value))
+                    .Select(item =>
+                        $"{Uri.EscapeDataString(item.Key)}={Uri.EscapeDataString(item.Value!)}"
+                    )
+            );
+
+            return $"{frontendBaseUrl}/payment-result?{queryString}";
         }
 
         // ============================================================
