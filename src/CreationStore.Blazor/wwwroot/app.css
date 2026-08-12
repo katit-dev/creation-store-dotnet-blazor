@@ -234,3 +234,10 @@ header a:hover {
     background: #2B2224 !important;
     color: #A7A1A3 !important;
 }
+
+.cs-info-box {
+    background: #120E10;
+    border: 1px solid #2B2224;
+    border-radius: 12px;
+    padding: 1rem;
+}
