@@ -69,6 +69,12 @@ namespace CreationStore.Blazor.Services
 
             NotifyStateChanged();
 
+            if (IsAdmin)
+            {
+                _navigationManager.NavigateTo("/admin/dashboard");
+                return;
+            }
+
             _navigationManager.NavigateTo("/");
         }
 
