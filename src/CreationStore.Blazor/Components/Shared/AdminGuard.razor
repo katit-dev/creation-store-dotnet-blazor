@@ -1,0 +1,71 @@
+@using CreationStore.Blazor.Services
+
+@implements IDisposable
+
+@inject UserStateService UserStateService
+@inject NavigationManager NavigationManager
+
+@if (!HasCheckedAuth)
+{
+    <div class="cs-card p-5 text-center">
+        <div class="spinner-border text-light mb-3"></div>
+
+        <p class="cs-muted mb-0">
+            Checking admin permission...
+        </p>
+    </div>
+}
+else if (CanRenderContent)
+{
+    @ChildContent
+}
+
+@code {
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    private bool HasCheckedAuth { get; set; }
+
+    private bool CanRenderContent { get; set; }
+
+    protected override void OnInitialized()
+    {
+        UserStateService.OnChange += HandleUserStateChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await UserStateService.GetProfileAsync();
+
+            HasCheckedAuth = true;
+
+            if (!UserStateService.IsAuthenticated)
+            {
+                NavigationManager.NavigateTo("/login");
+                return;
+            }
+
+            if (!UserStateService.IsAdmin)
+            {
+                NavigationManager.NavigateTo("/access-denied");
+                return;
+            }
+
+            CanRenderContent = true;
+
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void HandleUserStateChanged()
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        UserStateService.OnChange -= HandleUserStateChanged;
+    }
+}
