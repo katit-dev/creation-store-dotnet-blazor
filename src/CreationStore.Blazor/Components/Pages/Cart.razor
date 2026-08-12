@@ -7,6 +7,7 @@
 
 @inject UserStateService UserStateService
 @inject CartStateService CartStateService
+@inject CheckoutStateService CheckoutStateService
 @inject NavigationManager NavigationManager
 
 <PageTitle>Cart</PageTitle>
@@ -76,6 +77,13 @@ else
         </div>
     }
 
+    @if (!string.IsNullOrWhiteSpace(CheckoutStateService.ErrorMessage))
+    {
+        <div class="alert alert-danger">
+            @CheckoutStateService.ErrorMessage
+        </div>
+    }
+
     @if (!string.IsNullOrWhiteSpace(CartStateService.SuccessMessage))
     {
         <div class="alert alert-success">
@@ -125,7 +133,7 @@ else
                                     <div class="d-flex align-items-center gap-2">
                                         <button type="button"
                                                 class="btn cs-btn-outline cs-qty-btn"
-                                                disabled="@CartStateService.IsLoading"
+                                                disabled="@(CartStateService.IsLoading || CheckoutStateService.IsLoading)"
                                                 @onclick="() => DecreaseQuantity(item)">
                                             -
                                         </button>
@@ -136,7 +144,7 @@ else
 
                                         <button type="button"
                                                 class="btn cs-btn-outline cs-qty-btn"
-                                                disabled="@CartStateService.IsLoading"
+                                                disabled="@(CartStateService.IsLoading || CheckoutStateService.IsLoading)"
                                                 @onclick="() => IncreaseQuantity(item)">
                                             +
                                         </button>
@@ -152,7 +160,7 @@ else
                                 <div class="col-12 col-md-2 text-md-end">
                                     <button type="button"
                                             class="btn cs-btn-detail"
-                                            disabled="@CartStateService.IsLoading"
+                                            disabled="@(CartStateService.IsLoading || CheckoutStateService.IsLoading)"
                                             @onclick="() => RemoveItem(item.CartItemId)">
                                         Remove
                                     </button>
@@ -183,6 +191,7 @@ else
 
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <span class="fw-bold">Total</span>
+
                         <span class="fw-bold fs-4">
                             @FormatCurrency(CartStateService.TotalAmount)
                         </span>
@@ -190,20 +199,24 @@ else
 
                     <button type="button"
                             class="btn cs-btn-cart w-100 py-2 mb-3"
-                            disabled>
-                        Checkout
+                            disabled="@(CartStateService.IsLoading || CheckoutStateService.IsLoading)"
+                            @onclick="HandleCheckout">
+                        @if (CheckoutStateService.IsLoading)
+                        {
+                            <span>Redirecting to payment...</span>
+                        }
+                        else
+                        {
+                            <span>Checkout</span>
+                        }
                     </button>
 
                     <button type="button"
                             class="btn cs-btn-outline w-100 py-2"
-                            disabled="@CartStateService.IsLoading"
+                            disabled="@(CartStateService.IsLoading || CheckoutStateService.IsLoading)"
                             @onclick="ClearCart">
                         Clear Cart
                     </button>
-
-                    <p class="cs-muted small mt-3 mb-0">
-                        Checkout will be implemented in the next step.
-                    </p>
                 </div>
             </div>
         </div>
@@ -217,6 +230,7 @@ else
     {
         CartStateService.OnChange += HandleCartStateChanged;
         UserStateService.OnChange += HandleUserStateChanged;
+        CheckoutStateService.OnChange += HandleCheckoutStateChanged;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -242,6 +256,11 @@ else
     }
 
     private void HandleUserStateChanged()
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleCheckoutStateChanged()
     {
         _ = InvokeAsync(StateHasChanged);
     }
@@ -278,6 +297,23 @@ else
         await CartStateService.ClearCartAsync();
     }
 
+    private async Task HandleCheckout()
+    {
+        if (!UserStateService.IsAuthenticated)
+        {
+            NavigationManager.NavigateTo("/login");
+            return;
+        }
+
+        if (CartStateService.Cart == null ||
+            CartStateService.Cart.Items.Count == 0)
+        {
+            return;
+        }
+
+        await CheckoutStateService.CheckoutAndPayAsync();
+    }
+
     private void ContinueShopping()
     {
         NavigationManager.NavigateTo("/products");
@@ -297,5 +333,6 @@ else
     {
         CartStateService.OnChange -= HandleCartStateChanged;
         UserStateService.OnChange -= HandleUserStateChanged;
+        CheckoutStateService.OnChange -= HandleCheckoutStateChanged;
     }
 }
