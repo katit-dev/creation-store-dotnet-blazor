@@ -1,0 +1,365 @@
+@page "/admin/orders/{OrderId:int}"
+@layout AdminLayout
+
+@using CreationStore.Blazor.DTOs.Orders
+@using CreationStore.Blazor.Services
+
+@implements IDisposable
+
+@inject AdminOrderStateService AdminOrderStateService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Admin Order Detail</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1">
+            Order Detail
+        </h2>
+
+        <p class="cs-muted mb-0">
+            View order items, status and fulfillment actions.
+        </p>
+    </div>
+
+    <button type="button"
+            class="btn cs-btn-outline"
+            @onclick="GoBack">
+        Back to Orders
+    </button>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(AdminOrderStateService.ErrorMessage))
+{
+    <div class="alert alert-danger">
+        @AdminOrderStateService.ErrorMessage
+    </div>
+}
+
+@if (!string.IsNullOrWhiteSpace(AdminOrderStateService.SuccessMessage))
+{
+    <div class="alert alert-success">
+        @AdminOrderStateService.SuccessMessage
+    </div>
+}
+
+@if (AdminOrderStateService.IsLoading)
+{
+    <div class="cs-card p-5 text-center">
+        <div class="spinner-border text-light mb-3"></div>
+
+        <p class="cs-muted mb-0">
+            Loading order detail...
+        </p>
+    </div>
+}
+else if (AdminOrderStateService.SelectedOrder == null)
+{
+    <div class="cs-card p-5 text-center">
+        <h4 class="fw-bold">
+            Order not found
+        </h4>
+
+        <p class="cs-muted mb-0">
+            This order does not exist or you do not have permission to view it.
+        </p>
+    </div>
+}
+else
+{
+    var order = AdminOrderStateService.SelectedOrder;
+
+    <div class="row g-4">
+        <div class="col-12 col-xl-4">
+            <div class="cs-card p-4 mb-4">
+                <h4 class="fw-bold mb-3">
+                    Order Summary
+                </h4>
+
+                <div class="admin-detail-row">
+                    <span>Order ID</span>
+                    <strong>#@order.OrderId</strong>
+                </div>
+
+                <div class="admin-detail-row">
+                    <span>Order Date</span>
+                    <strong>@order.OrderDate.ToString("dd/MM/yyyy HH:mm")</strong>
+                </div>
+
+                <div class="admin-detail-row">
+                    <span>Status</span>
+                    <span class="@GetOrderStatusClass(order.Status)">
+                        @order.Status
+                    </span>
+                </div>
+
+                <div class="admin-detail-row">
+                    <span>Payment</span>
+                    <span class="@GetPaymentStatusClass(order.PaymentStatus)">
+                        @order.PaymentStatus
+                    </span>
+                </div>
+
+                <div class="admin-detail-row">
+                    <span>Total</span>
+                    <strong>@FormatCurrency(order.TotalAmount)</strong>
+                </div>
+            </div>
+
+            <div class="cs-card p-4">
+                <h4 class="fw-bold mb-3">
+                    Actions
+                </h4>
+
+                <div class="d-grid gap-2">
+                    @if (CanComplete(order))
+                    {
+                        <button type="button"
+                                class="btn cs-btn-cart"
+                                disabled="@AdminOrderStateService.IsLoading"
+                                @onclick="() => CompleteOrderAsync(order.OrderId)">
+                            Complete Order
+                        </button>
+                    }
+
+                    @if (CanCancel(order))
+                    {
+                        <button type="button"
+                                class="btn cs-btn-outline"
+                                disabled="@AdminOrderStateService.IsLoading"
+                                @onclick="OpenCancelBox">
+                            Cancel Order
+                        </button>
+                    }
+
+                    @if (!CanComplete(order) && !CanCancel(order))
+                    {
+                        <div class="cs-muted">
+                            No action available for this order status.
+                        </div>
+                    }
+                </div>
+
+                @if (ShowCancelBox)
+                {
+                    <div class="admin-cancel-box mt-4">
+                        <label class="form-label">
+                            Cancel Reason
+                        </label>
+
+                        <textarea class="form-control cs-input"
+                                  rows="3"
+                                  placeholder="Enter cancel reason..."
+                                  @bind="CancelReason">
+                        </textarea>
+
+                        <div class="d-flex gap-2 mt-3">
+                            <button type="button"
+                                    class="btn cs-btn-cart btn-sm"
+                                    disabled="@AdminOrderStateService.IsLoading"
+                                    @onclick="() => ConfirmCancelAsync(order.OrderId)">
+                                Confirm Cancel
+                            </button>
+
+                            <button type="button"
+                                    class="btn cs-btn-outline btn-sm"
+                                    disabled="@AdminOrderStateService.IsLoading"
+                                    @onclick="CloseCancelBox">
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="col-12 col-xl-8">
+            <div class="cs-card p-4">
+                <h4 class="fw-bold mb-4">
+                    Order Items
+                </h4>
+
+                @if (order.Items == null || order.Items.Count == 0)
+                {
+                    <div class="p-5 text-center">
+                        <h5>No items found</h5>
+
+                        <p class="cs-muted mb-0">
+                            This order has no item data.
+                        </p>
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover align-middle mb-0 cs-order-table">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th class="text-center">Quantity</th>
+                                    <th class="text-end">Unit Price</th>
+                                    <th class="text-end">Subtotal</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                @foreach (OrderItemResponseDTO item in order.Items)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="fw-semibold">
+                                                @item.ProductName
+                                            </div>
+
+                                            <div class="cs-muted small">
+                                                Product ID: @item.ProductId
+                                            </div>
+                                        </td>
+
+                                        <td class="text-center">
+                                            @item.Quantity
+                                        </td>
+
+                                        <td class="text-end">
+                                            @FormatCurrency(item.UnitPrice)
+                                        </td>
+
+                                        <td class="text-end fw-semibold">
+                                            @FormatCurrency(item.SubTotal)
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int OrderId { get; set; }
+
+    private bool ShowCancelBox { get; set; }
+
+    private string CancelReason { get; set; } = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        AdminOrderStateService.OnChange += HandleOrderStateChanged;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await AdminOrderStateService.LoadOrderDetailAsync(OrderId);
+    }
+
+    private void HandleOrderStateChanged()
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo("/admin/orders");
+    }
+
+    private async Task CompleteOrderAsync(int orderId)
+    {
+        var success = await AdminOrderStateService.CompleteOrderAsync(orderId);
+
+        if (success)
+        {
+            await AdminOrderStateService.LoadOrderDetailAsync(orderId);
+        }
+
+        CloseCancelBox();
+    }
+
+    private void OpenCancelBox()
+    {
+        ShowCancelBox = true;
+        CancelReason = string.Empty;
+    }
+
+    private void CloseCancelBox()
+    {
+        ShowCancelBox = false;
+        CancelReason = string.Empty;
+    }
+
+    private async Task ConfirmCancelAsync(int orderId)
+    {
+        if (string.IsNullOrWhiteSpace(CancelReason))
+        {
+            CancelReason = "Cancelled by administrator";
+        }
+
+        var success = await AdminOrderStateService.CancelOrderAsync(
+            orderId,
+            CancelReason
+        );
+
+        if (success)
+        {
+            await AdminOrderStateService.LoadOrderDetailAsync(orderId);
+        }
+
+        CloseCancelBox();
+    }
+
+    private static bool CanComplete(OrderResponseDTO order)
+    {
+        return order.Status.Equals(
+            "Paid",
+            StringComparison.OrdinalIgnoreCase
+        );
+    }
+
+    private static bool CanCancel(OrderResponseDTO order)
+    {
+        return order.Status.Equals(
+                "PendingPayment",
+                StringComparison.OrdinalIgnoreCase
+            ) ||
+            order.Status.Equals(
+                "Paid",
+                StringComparison.OrdinalIgnoreCase
+            );
+    }
+
+    private static string FormatCurrency(decimal price)
+    {
+        return price.ToString("#,##0") + "đ";
+    }
+
+    private static string GetOrderStatusClass(string status)
+    {
+        return status.ToLower() switch
+        {
+            "pendingpayment" => "badge cs-status-badge cs-status-warning",
+            "paid" => "badge cs-status-badge cs-status-info",
+            "completed" => "badge cs-status-badge cs-status-success",
+            "cancelled" => "badge cs-status-badge cs-status-danger",
+            _ => "badge cs-status-badge"
+        };
+    }
+
+    private static string GetPaymentStatusClass(string status)
+    {
+        return status.ToLower() switch
+        {
+            "succeeded" => "badge cs-status-badge cs-status-success",
+            "failed" => "badge cs-status-badge cs-status-danger",
+            "pending" => "badge cs-status-badge cs-status-warning",
+            _ => "badge cs-status-badge"
+        };
+    }
+
+    public void Dispose()
+    {
+        AdminOrderStateService.OnChange -= HandleOrderStateChanged;
+    }
+}
