@@ -540,3 +540,21 @@ header a:hover {
     background: #753041 !important;
     color: #FFFFFF !important;
 }
+
+/* =========================
+   fix admin profile
+========================= */
+.form-control.cs-input,
+.input-group-text.cs-input {
+    background: #120E10 !important;
+    color: #FFFFFF !important;
+    border: 1px solid #2B2224 !important;
+}
+
+.form-control.cs-input:disabled,
+.form-control.cs-input[readonly] {
+    background: #1A1516 !important;
+    color: #A7A1A3 !important;
+    border: 1px solid #2B2224 !important;
+    opacity: 1 !important;
+}
