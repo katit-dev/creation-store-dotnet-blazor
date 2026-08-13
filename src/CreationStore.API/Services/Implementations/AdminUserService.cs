@@ -30,7 +30,7 @@ namespace CreationStore.API.Services.Implementations
                 .AsNoTracking()
                 .Include(u => u.UserRoles)
                     .ThenInclude(ur => ur.Role)
-                .OrderBy(u => u.UserId)
+                .OrderByDescending(u => u.CreatedAt)
                 .ToListAsync();
 
             var result = users
@@ -83,12 +83,16 @@ namespace CreationStore.API.Services.Implementations
                 FullName = user.FullName,
                 Email = user.Email,
                 Phone = user.Phone,
+
                 RoleIds = user.UserRoles
                     .Select(ur => ur.RoleId)
                     .ToList(),
+
                 Roles = user.UserRoles
+                    .Where(ur => ur.Role != null)
                     .Select(ur => ur.Role.RoleName)
                     .ToList(),
+
                 OrderCount = orderCount,
                 TotalSpent = totalSpent
             };
@@ -104,7 +108,6 @@ namespace CreationStore.API.Services.Implementations
         public async Task<ResponseTypeDTO<AdminUserResponseDTO>>
             ChangeUserRoleAsync(int userId, AdminChangeUserRoleDTO dto)
         {
-            // kiem tra roleId nhap co hop le khong
             if (dto.RoleId <= 0)
             {
                 return new ResponseTypeDTO<AdminUserResponseDTO>
@@ -115,9 +118,8 @@ namespace CreationStore.API.Services.Implementations
                 };
             }
 
-            // lay admin hien tai tu token
             var currentAdminUserId = GetCurrentUserId();
-            // khong cho admin tu doi role cua chinh minh
+
             if (currentAdminUserId == userId)
             {
                 return new ResponseTypeDTO<AdminUserResponseDTO>
@@ -128,7 +130,6 @@ namespace CreationStore.API.Services.Implementations
                 };
             }
 
-            // kiem tra roleId trong dto co hop le khong
             var role = await _context.Roles
                 .AsNoTracking()
                 .FirstOrDefaultAsync(r => r.RoleId == dto.RoleId);
@@ -143,7 +144,6 @@ namespace CreationStore.API.Services.Implementations
                 };
             }
 
-            // tim user theo userId duoc truyen vao
             var user = await _context.Users
                 .Include(u => u.UserRoles)
                     .ThenInclude(ur => ur.Role)
@@ -159,16 +159,12 @@ namespace CreationStore.API.Services.Implementations
                 };
             }
 
-            // neu tim thay user
-            // tiep tuc kiem tra user do co dang giu role admin khong
             var isTargetAdmin = user.UserRoles
                 .Any(ur => ur.RoleId == CRole.Admin);
 
-            // neu dang la admin && va muon doi sang role # admin
             var isChangingAdminToOtherRole =
                 isTargetAdmin && dto.RoleId != CRole.Admin;
 
-            // neu doi tu admin -> other
             if (isChangingAdminToOtherRole)
             {
                 var adminCount = await _context.UserRoles
@@ -176,8 +172,7 @@ namespace CreationStore.API.Services.Implementations
                     .Select(ur => ur.UserId)
                     .Distinct()
                     .CountAsync();
-                // chan khong cho phep chuyen role cua admin cuoi cung trong he thong
-                // vi neu chi con 1 admin, ma doi thi khong con admin nao trong he thong
+
                 if (adminCount <= 1)
                 {
                     return new ResponseTypeDTO<AdminUserResponseDTO>
@@ -188,9 +183,7 @@ namespace CreationStore.API.Services.Implementations
                     };
                 }
             }
-            
-            // Neu khong roi vao truong hop tren
-            // thi thuc hien xoa role cu va them role moi
+
             var oldRoles = await _context.UserRoles
                 .Where(ur => ur.UserId == userId)
                 .ToListAsync();
@@ -203,9 +196,10 @@ namespace CreationStore.API.Services.Implementations
                 RoleId = dto.RoleId
             });
 
+            user.UpdatedAt = DateTime.Now;
+
             await _context.SaveChangesAsync();
 
-            // sau khi doi thi lay user do ra de hien thi
             var updatedUser = await _context.Users
                 .AsNoTracking()
                 .Include(u => u.UserRoles)
@@ -217,6 +211,121 @@ namespace CreationStore.API.Services.Implementations
                 StatusCode = 200,
                 Message = "User role updated successfully",
                 Content = BuildUserResponse(updatedUser)
+            };
+        }
+
+        public async Task<ResponseTypeDTO<AdminUserResponseDTO>>
+            ActivateUserAsync(int userId)
+        {
+            var user = await _context.Users
+                .Include(u => u.UserRoles)
+                    .ThenInclude(ur => ur.Role)
+                .FirstOrDefaultAsync(u => u.UserId == userId);
+
+            if (user == null)
+            {
+                return new ResponseTypeDTO<AdminUserResponseDTO>
+                {
+                    StatusCode = 404,
+                    Message = "User not found",
+                    Content = null
+                };
+            }
+
+            if (user.IsActive)
+            {
+                return new ResponseTypeDTO<AdminUserResponseDTO>
+                {
+                    StatusCode = 400,
+                    Message = "User is already active",
+                    Content = null
+                };
+            }
+
+            user.IsActive = true;
+            user.UpdatedAt = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+
+            return new ResponseTypeDTO<AdminUserResponseDTO>
+            {
+                StatusCode = 200,
+                Message = "User activated successfully",
+                Content = BuildUserResponse(user)
+            };
+        }
+
+        public async Task<ResponseTypeDTO<AdminUserResponseDTO>>
+            DeactivateUserAsync(int userId)
+        {
+            var currentAdminUserId = GetCurrentUserId();
+
+            if (currentAdminUserId == userId)
+            {
+                return new ResponseTypeDTO<AdminUserResponseDTO>
+                {
+                    StatusCode = 400,
+                    Message = "You cannot deactivate your own admin account",
+                    Content = null
+                };
+            }
+
+            var user = await _context.Users
+                .Include(u => u.UserRoles)
+                    .ThenInclude(ur => ur.Role)
+                .FirstOrDefaultAsync(u => u.UserId == userId);
+
+            if (user == null)
+            {
+                return new ResponseTypeDTO<AdminUserResponseDTO>
+                {
+                    StatusCode = 404,
+                    Message = "User not found",
+                    Content = null
+                };
+            }
+
+            if (!user.IsActive)
+            {
+                return new ResponseTypeDTO<AdminUserResponseDTO>
+                {
+                    StatusCode = 400,
+                    Message = "User is already inactive",
+                    Content = null
+                };
+            }
+
+            var isTargetAdmin = user.UserRoles
+                .Any(ur => ur.RoleId == CRole.Admin);
+
+            if (isTargetAdmin)
+            {
+                var activeAdminCount = await _context.Users
+                    .Where(u => u.IsActive)
+                    .Where(u => u.UserRoles.Any(ur => ur.RoleId == CRole.Admin))
+                    .CountAsync();
+
+                if (activeAdminCount <= 1)
+                {
+                    return new ResponseTypeDTO<AdminUserResponseDTO>
+                    {
+                        StatusCode = 400,
+                        Message = "Cannot deactivate the last active admin",
+                        Content = null
+                    };
+                }
+            }
+
+            user.IsActive = false;
+            user.UpdatedAt = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+
+            return new ResponseTypeDTO<AdminUserResponseDTO>
+            {
+                StatusCode = 200,
+                Message = "User deactivated successfully",
+                Content = BuildUserResponse(user)
             };
         }
 
@@ -245,10 +354,16 @@ namespace CreationStore.API.Services.Implementations
                 FullName = user.FullName,
                 Email = user.Email,
                 Phone = user.Phone,
+                IsActive = user.IsActive,
+                CreatedAt = user.CreatedAt,
+                UpdatedAt = user.UpdatedAt,
+
                 RoleIds = user.UserRoles
                     .Select(ur => ur.RoleId)
                     .ToList(),
+
                 Roles = user.UserRoles
+                    .Where(ur => ur.Role != null)
                     .Select(ur => ur.Role.RoleName)
                     .ToList()
             };
