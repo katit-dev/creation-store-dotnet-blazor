@@ -21,6 +21,7 @@ namespace CreationStore.API.Controllers.Admin
         public async Task<IActionResult> GetAllUsers()
         {
             var result = await _adminUserService.GetAllUsersAsync();
+
             return StatusCode(result.StatusCode, result);
         }
 
@@ -28,6 +29,7 @@ namespace CreationStore.API.Controllers.Admin
         public async Task<IActionResult> GetUserById(int userId)
         {
             var result = await _adminUserService.GetUserByIdAsync(userId);
+
             return StatusCode(result.StatusCode, result);
         }
 
@@ -41,6 +43,22 @@ namespace CreationStore.API.Controllers.Admin
                 userId,
                 dto
             );
+
+            return StatusCode(result.StatusCode, result);
+        }
+
+        [HttpPut("{userId:int}/activate")]
+        public async Task<IActionResult> ActivateUser(int userId)
+        {
+            var result = await _adminUserService.ActivateUserAsync(userId);
+
+            return StatusCode(result.StatusCode, result);
+        }
+
+        [HttpPut("{userId:int}/deactivate")]
+        public async Task<IActionResult> DeactivateUser(int userId)
+        {
+            var result = await _adminUserService.DeactivateUserAsync(userId);
 
             return StatusCode(result.StatusCode, result);
         }
