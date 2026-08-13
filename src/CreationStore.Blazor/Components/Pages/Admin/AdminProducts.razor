@@ -2,13 +2,15 @@
 @layout AdminLayout
 
 @using CreationStore.Blazor.DTOs.Products
+@using CreationStore.Blazor.DTOs.Categories
 @using CreationStore.Blazor.Services
 @using Microsoft.AspNetCore.Components.Forms
 
 @implements IDisposable
 
+@inject UserStateService UserStateService
 @inject AdminProductStateService AdminProductStateService
-@inject NavigationManager NavigationManager
+@inject AdminCategoryStateService AdminCategoryStateService
 
 <PageTitle>Admin Products</PageTitle>
 
@@ -25,7 +27,7 @@
 
     <button type="button"
             class="btn cs-btn-outline"
-            @onclick="ReloadProducts">
+            @onclick="ReloadData">
         Reload
     </button>
 </div>
@@ -34,6 +36,13 @@
 {
     <div class="alert alert-danger">
         @AdminProductStateService.ErrorMessage
+    </div>
+}
+
+@if (!string.IsNullOrWhiteSpace(AdminCategoryStateService.ErrorMessage))
+{
+    <div class="alert alert-danger">
+        @AdminCategoryStateService.ErrorMessage
     </div>
 }
 
@@ -59,119 +68,135 @@
                 </div>
             </div>
 
-            @if (ProductEditContext != null)
-            {
-                <EditForm EditContext="ProductEditContext"
-                          OnValidSubmit="SaveProductAsync">
-                    <DataAnnotationsValidator />
+            <EditForm EditContext="ProductEditContext"
+                      OnValidSubmit="SaveProductAsync">
+                <DataAnnotationsValidator />
 
-                    @if (HasValidationErrors)
-                    {
-                        <div class="cs-validation-box">
-                            <div class="cs-validation-title">
-                                Please check the following fields:
-                            </div>
-
-                            <ValidationSummary />
+                @if (HasValidationErrors)
+                {
+                    <div class="cs-validation-box">
+                        <div class="cs-validation-title">
+                            Please check the following fields:
                         </div>
-                    }
 
-                    <div class="mb-3">
-                        <label class="form-label">
-                            Product Name
-                        </label>
-
-                        <InputText class="form-control cs-input"
-                                   placeholder="Enter product name"
-                                   @bind-Value="ProductForm.ProductName" />
-
-                        <ValidationMessage For="@(() => ProductForm.ProductName)" />
+                        <ValidationSummary />
                     </div>
+                }
 
-                    <div class="mb-3">
+                <div class="mb-3">
+                    <label class="form-label">
+                        Product Name
+                    </label>
+
+                    <InputText class="form-control cs-input"
+                               placeholder="Enter product name"
+                               @bind-Value="ProductForm.ProductName" />
+
+                    <ValidationMessage For="@(() => ProductForm.ProductName)" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">
+                        Description
+                    </label>
+
+                    <InputTextArea class="form-control cs-input"
+                                   rows="3"
+                                   placeholder="Enter description"
+                                   @bind-Value="ProductForm.Description" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">
+                        Price
+                    </label>
+
+                    <InputNumber class="form-control cs-input"
+                                 @bind-Value="ProductForm.Price" />
+
+                    <ValidationMessage For="@(() => ProductForm.Price)" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">
+                        Image URL
+                    </label>
+
+                    <InputText class="form-control cs-input"
+                               placeholder="/images/example.png"
+                               @bind-Value="ProductForm.ImageUrl" />
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
                         <label class="form-label">
-                            Description
-                        </label>
-
-                        <InputTextArea class="form-control cs-input"
-                                       rows="3"
-                                       placeholder="Enter description"
-                                       @bind-Value="ProductForm.Description" />
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">
-                            Price
+                            Validity Days
                         </label>
 
                         <InputNumber class="form-control cs-input"
-                                     @bind-Value="ProductForm.Price" />
+                                     @bind-Value="ProductForm.ValidityDays" />
 
-                        <ValidationMessage For="@(() => ProductForm.Price)" />
+                        <ValidationMessage For="@(() => ProductForm.ValidityDays)" />
                     </div>
 
-                    <div class="mb-3">
+                    <div class="col-12 col-md-6">
                         <label class="form-label">
-                            Image URL
+                            Category
                         </label>
 
-                        <InputText class="form-control cs-input"
-                                   placeholder="/images/example.png"
-                                   @bind-Value="ProductForm.ImageUrl" />
+                        <InputSelect class="form-control cs-input"
+                                     @bind-Value="ProductForm.CategoryId">
+                            <option value="0">
+                                Select category
+                            </option>
+
+                            @foreach (CategoryResponseDTO category in AdminCategoryStateService.Categories)
+                            {
+                                <option value="@category.CategoryId">
+                                    @category.CategoryName
+                                </option>
+                            }
+                        </InputSelect>
+
+                        <ValidationMessage For="@(() => ProductForm.CategoryId)" />
                     </div>
+                </div>
 
-                    <div class="row g-3">
-                        <div class="col-12 col-md-6">
-                            <label class="form-label">
-                                Validity Days
-                            </label>
-
-                            <InputNumber class="form-control cs-input"
-                                         @bind-Value="ProductForm.ValidityDays" />
-
-                            <ValidationMessage For="@(() => ProductForm.ValidityDays)" />
-                        </div>
-
-                        <div class="col-12 col-md-6">
-                            <label class="form-label">
-                                Category ID
-                            </label>
-
-                            <InputNumber class="form-control cs-input"
-                                         @bind-Value="ProductForm.CategoryId" />
-
-                            <ValidationMessage For="@(() => ProductForm.CategoryId)" />
-                        </div>
-                    </div>
-
-                    <div class="d-flex gap-2 mt-4">
-                        <button type="submit"
-                                class="btn cs-btn-cart"
-                                disabled="@AdminProductStateService.IsLoading">
-                            @(IsEditMode ? "Save Changes" : "Create Product")
-                        </button>
-
-                        @if (IsEditMode)
+                <div class="d-flex gap-2 mt-4">
+                    <button type="submit"
+                            class="btn cs-btn-cart"
+                            disabled="@IsSaving">
+                        @if (IsSaving)
                         {
-                            <button type="button"
-                                    class="btn cs-btn-outline"
-                                    disabled="@AdminProductStateService.IsLoading"
-                                    @onclick="CancelEdit">
-                                Cancel
-                            </button>
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                            <span>Saving...</span>
                         }
                         else
                         {
-                            <button type="button"
-                                    class="btn cs-btn-outline"
-                                    disabled="@AdminProductStateService.IsLoading"
-                                    @onclick="ResetForm">
-                                Reset
-                            </button>
+                            <span>@(IsEditMode ? "Save Changes" : "Create Product")</span>
                         }
-                    </div>
-                </EditForm>
-            }
+                    </button>
+
+                    @if (IsEditMode)
+                    {
+                        <button type="button"
+                                class="btn cs-btn-outline"
+                                disabled="@IsSaving"
+                                @onclick="CancelEdit">
+                            Cancel
+                        </button>
+                    }
+                    else
+                    {
+                        <button type="button"
+                                class="btn cs-btn-outline"
+                                disabled="@IsSaving"
+                                @onclick="ResetForm">
+                            Reset
+                        </button>
+                    }
+                </div>
+            </EditForm>
         </div>
     </div>
 
@@ -196,7 +221,7 @@
                 </div>
             </div>
 
-            @if (AdminProductStateService.IsLoading)
+            @if (AdminProductStateService.IsLoading || AdminCategoryStateService.IsLoading)
             {
                 <div class="p-5 text-center">
                     <div class="spinner-border text-light mb-3"></div>
@@ -305,19 +330,20 @@
 @code {
     private ProductCreateDTO ProductForm { get; set; } = new()
     {
-        CategoryId = 1
+        CategoryId = 0
     };
 
-    private EditContext? ProductEditContext { get; set; }
+    private EditContext ProductEditContext { get; set; } = default!;
 
     private int? EditingProductId { get; set; }
 
     private bool IsEditMode => EditingProductId.HasValue;
 
-    private string Keyword { get; set; } = string.Empty;
+    private bool HasValidationErrors { get; set; }
 
-    private bool HasValidationErrors =>
-        ProductEditContext?.GetValidationMessages().Any() == true;
+    private bool IsSaving { get; set; }
+
+    private string Keyword { get; set; } = string.Empty;
 
     private List<ProductResponseDTO> FilteredProducts
     {
@@ -348,6 +374,7 @@
     protected override void OnInitialized()
     {
         AdminProductStateService.OnChange += HandleProductStateChanged;
+        AdminCategoryStateService.OnChange += HandleCategoryStateChanged;
 
         CreateEditContext();
     }
@@ -356,19 +383,22 @@
     {
         if (firstRender)
         {
-            await AdminProductStateService.LoadProductsAsync();
+            await UserStateService.GetProfileAsync();
+
+            if (UserStateService.IsAuthenticated && UserStateService.IsAdmin)
+            {
+                await ReloadData();
+            }
         }
     }
 
     private void CreateEditContext()
     {
-        if (ProductEditContext != null)
-        {
-            ProductEditContext.OnValidationStateChanged -= HandleValidationStateChanged;
-        }
-
         ProductEditContext = new EditContext(ProductForm);
+
         ProductEditContext.OnValidationStateChanged += HandleValidationStateChanged;
+
+        HasValidationErrors = false;
     }
 
     private void HandleValidationStateChanged(
@@ -376,6 +406,10 @@
         ValidationStateChangedEventArgs e
     )
     {
+        HasValidationErrors = ProductEditContext
+            .GetValidationMessages()
+            .Any();
+
         _ = InvokeAsync(StateHasChanged);
     }
 
@@ -384,45 +418,60 @@
         _ = InvokeAsync(StateHasChanged);
     }
 
-    private async Task ReloadProducts()
+    private void HandleCategoryStateChanged()
     {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private async Task ReloadData()
+    {
+        await AdminCategoryStateService.LoadCategoriesAsync();
         await AdminProductStateService.LoadProductsAsync();
     }
 
     private async Task SaveProductAsync()
     {
-        if (IsEditMode && EditingProductId.HasValue)
-        {
-            var updateDto = new ProductUpdateDTO
-            {
-                ProductName = ProductForm.ProductName,
-                Description = ProductForm.Description,
-                Price = ProductForm.Price,
-                ImageUrl = ProductForm.ImageUrl,
-                ValidityDays = ProductForm.ValidityDays,
-                CategoryId = ProductForm.CategoryId
-            };
+        IsSaving = true;
 
-            var success = await AdminProductStateService.UpdateProductAsync(
-                EditingProductId.Value,
-                updateDto
+        try
+        {
+            if (IsEditMode && EditingProductId.HasValue)
+            {
+                var updateDto = new ProductUpdateDTO
+                {
+                    ProductName = ProductForm.ProductName,
+                    Description = ProductForm.Description,
+                    Price = ProductForm.Price,
+                    ImageUrl = ProductForm.ImageUrl,
+                    ValidityDays = ProductForm.ValidityDays,
+                    CategoryId = ProductForm.CategoryId
+                };
+
+                var success = await AdminProductStateService.UpdateProductAsync(
+                    EditingProductId.Value,
+                    updateDto
+                );
+
+                if (success)
+                {
+                    ResetForm();
+                }
+
+                return;
+            }
+
+            var created = await AdminProductStateService.CreateProductAsync(
+                ProductForm
             );
 
-            if (success)
+            if (created)
             {
                 ResetForm();
             }
-
-            return;
         }
-
-        var created = await AdminProductStateService.CreateProductAsync(
-            ProductForm
-        );
-
-        if (created)
+        finally
         {
-            ResetForm();
+            IsSaving = false;
         }
     }
 
@@ -459,7 +508,7 @@
             Price = 0,
             ImageUrl = string.Empty,
             ValidityDays = null,
-            CategoryId = 1
+            CategoryId = 0
         };
 
         CreateEditContext();
@@ -505,6 +554,7 @@
     public void Dispose()
     {
         AdminProductStateService.OnChange -= HandleProductStateChanged;
+        AdminCategoryStateService.OnChange -= HandleCategoryStateChanged;
 
         if (ProductEditContext != null)
         {
