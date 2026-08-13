@@ -1,6 +1,7 @@
 @page "/admin/orders/{OrderId:int}"
 @layout AdminLayout
 
+@using CreationStore.Blazor.Components.Layout
 @using CreationStore.Blazor.DTOs.Orders
 @using CreationStore.Blazor.Services
 
@@ -88,6 +89,7 @@ else
 
                 <div class="admin-detail-row">
                     <span>Status</span>
+
                     <span class="@GetOrderStatusClass(order.Status)">
                         @order.Status
                     </span>
@@ -95,6 +97,7 @@ else
 
                 <div class="admin-detail-row">
                     <span>Payment</span>
+
                     <span class="@GetPaymentStatusClass(order.PaymentStatus)">
                         @order.PaymentStatus
                     </span>
@@ -150,8 +153,7 @@ else
                         <textarea class="form-control cs-input"
                                   rows="3"
                                   placeholder="Enter cancel reason..."
-                                  @bind="CancelReason">
-                        </textarea>
+                                  @bind="CancelReason"></textarea>
 
                         <div class="d-flex gap-2 mt-3">
                             <button type="button"
@@ -312,20 +314,28 @@ else
 
     private static bool CanComplete(OrderResponseDTO order)
     {
-        return order.Status.Equals(
-            "Paid",
-            StringComparison.OrdinalIgnoreCase
-        );
+        return string.Equals(
+                order.Status,
+                "Paid",
+                StringComparison.OrdinalIgnoreCase
+            ) &&
+            string.Equals(
+                order.PaymentStatus,
+                "Succeeded",
+                StringComparison.OrdinalIgnoreCase
+            );
     }
 
     private static bool CanCancel(OrderResponseDTO order)
     {
-        return order.Status.Equals(
+        return string.Equals(
+                order.Status,
                 "PendingPayment",
                 StringComparison.OrdinalIgnoreCase
-            ) ||
-            order.Status.Equals(
-                "Paid",
+            ) &&
+            !string.Equals(
+                order.PaymentStatus,
+                "Succeeded",
                 StringComparison.OrdinalIgnoreCase
             );
     }
@@ -335,9 +345,9 @@ else
         return price.ToString("#,##0") + "đ";
     }
 
-    private static string GetOrderStatusClass(string status)
+    private static string GetOrderStatusClass(string? status)
     {
-        return status.ToLower() switch
+        return status?.ToLowerInvariant() switch
         {
             "pendingpayment" => "badge cs-status-badge cs-status-warning",
             "paid" => "badge cs-status-badge cs-status-info",
@@ -347,13 +357,14 @@ else
         };
     }
 
-    private static string GetPaymentStatusClass(string status)
+    private static string GetPaymentStatusClass(string? status)
     {
-        return status.ToLower() switch
+        return status?.ToLowerInvariant() switch
         {
             "succeeded" => "badge cs-status-badge cs-status-success",
             "failed" => "badge cs-status-badge cs-status-danger",
             "pending" => "badge cs-status-badge cs-status-warning",
+            "cancelled" => "badge cs-status-badge cs-status-danger",
             _ => "badge cs-status-badge"
         };
     }
