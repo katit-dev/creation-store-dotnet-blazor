@@ -635,3 +635,19 @@ header a:hover {
 .admin-detail-row:last-child {
     border-bottom: 0;
 }
+
+/* =========================
+    admin-user styles
+========================= */
+.admin-user-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(180deg, #C94A68 0%, #753041 100%);
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    box-shadow: 0 0 14px rgba(201, 74, 104, 0.22);
+}
