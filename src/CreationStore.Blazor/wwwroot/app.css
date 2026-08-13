@@ -613,3 +613,25 @@ header a:hover {
 .validation-errors {
     color: #FFD9E2 !important;
 }
+
+/* =========================
+    admin-order styles
+========================= */
+.admin-cancel-box {
+    background: rgba(255, 87, 120, 0.1);
+    border: 1px solid rgba(255, 111, 142, 0.35);
+    border-radius: 12px;
+    padding: 1rem;
+}
+
+.admin-detail-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.85rem 0;
+    border-bottom: 1px solid #2B2224;
+}
+
+.admin-detail-row:last-child {
+    border-bottom: 0;
+}
