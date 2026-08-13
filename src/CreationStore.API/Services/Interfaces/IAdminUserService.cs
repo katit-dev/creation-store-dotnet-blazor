@@ -15,5 +15,13 @@ namespace CreationStore.API.Services.Interfaces
             int userId,
             AdminChangeUserRoleDTO dto
         );
+
+        Task<ResponseTypeDTO<AdminUserResponseDTO>> ActivateUserAsync(
+            int userId
+        );
+
+        Task<ResponseTypeDTO<AdminUserResponseDTO>> DeactivateUserAsync(
+            int userId
+        );
     }
 }
