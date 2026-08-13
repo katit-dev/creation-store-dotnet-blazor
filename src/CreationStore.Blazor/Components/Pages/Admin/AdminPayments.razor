@@ -1,0 +1,448 @@
+@page "/admin/payments"
+@layout AdminLayout
+
+@using CreationStore.Blazor.Components.Layout
+@using CreationStore.Blazor.DTOs.Admin.Payments
+@using CreationStore.Blazor.Services
+
+@implements IDisposable
+
+@inject AdminPaymentStateService AdminPaymentStateService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Admin Payments</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1">
+            Payments
+        </h2>
+
+        <p class="cs-muted mb-0">
+            View payment transactions, VNPAY references and order payment status.
+        </p>
+    </div>
+
+    <button type="button"
+            class="btn cs-btn-outline"
+            @onclick="ReloadPayments">
+        Reload
+    </button>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(AdminPaymentStateService.ErrorMessage))
+{
+    <div class="alert alert-danger">
+        @AdminPaymentStateService.ErrorMessage
+    </div>
+}
+
+@if (!string.IsNullOrWhiteSpace(AdminPaymentStateService.SuccessMessage))
+{
+    <div class="alert alert-success">
+        @AdminPaymentStateService.SuccessMessage
+    </div>
+}
+
+<div class="cs-card p-4 mb-4">
+    <div class="row g-3">
+        <div class="col-12 col-xl-5">
+            <label class="form-label">
+                Search
+            </label>
+
+            <input class="form-control cs-input"
+                   placeholder="Search payment id, order id, txn ref, bank code..."
+                   @bind="Keyword"
+                   @bind:event="oninput" />
+        </div>
+
+        <div class="col-12 col-md-4 col-xl-3">
+            <label class="form-label">
+                Transaction Status
+            </label>
+
+            <select class="form-control cs-input"
+                    @bind="SelectedTransactionStatus">
+                <option value="">All statuses</option>
+
+                @foreach (string status in TransactionStatuses)
+                {
+                    <option value="@status">
+                        @status
+                    </option>
+                }
+            </select>
+        </div>
+
+        <div class="col-12 col-md-4 col-xl-2">
+            <label class="form-label">
+                Method
+            </label>
+
+            <select class="form-control cs-input"
+                    @bind="SelectedPaymentMethod">
+                <option value="">All methods</option>
+
+                @foreach (string method in PaymentMethods)
+                {
+                    <option value="@method">
+                        @method
+                    </option>
+                }
+            </select>
+        </div>
+
+        <div class="col-12 col-md-4 col-xl-2">
+            <label class="form-label">
+                Bank
+            </label>
+
+            <select class="form-control cs-input"
+                    @bind="SelectedBankCode">
+                <option value="">All banks</option>
+
+                @foreach (string bankCode in BankCodes)
+                {
+                    <option value="@bankCode">
+                        @bankCode
+                    </option>
+                }
+            </select>
+        </div>
+    </div>
+</div>
+
+<div class="cs-card p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="fw-bold mb-1">
+                Payment List
+            </h4>
+
+            <p class="cs-muted mb-0">
+                @FilteredPayments.Count payment transaction(s) found.
+            </p>
+        </div>
+    </div>
+
+    @if (AdminPaymentStateService.IsLoading)
+    {
+        <div class="p-5 text-center">
+            <div class="spinner-border text-light mb-3"></div>
+
+            <p class="cs-muted mb-0">
+                Loading payments...
+            </p>
+        </div>
+    }
+    else if (FilteredPayments.Count == 0)
+    {
+        <div class="p-5 text-center">
+            <h5>No payments found</h5>
+
+            <p class="cs-muted mb-0">
+                Try changing your filters.
+            </p>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-dark table-hover align-middle mb-0 cs-order-table">
+                <thead>
+                    <tr>
+                        <th>Payment</th>
+                        <th>Order</th>
+                        <th>Customer</th>
+                        <th>Method</th>
+                        <th>Status</th>
+                        <th>Bank</th>
+                        <th>VNPAY Ref</th>
+                        <th class="text-end">Amount</th>
+                        <th>Created</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (AdminPaymentResponseDTO payment in FilteredPayments)
+                    {
+                        <tr>
+                            <td>
+                                <div class="fw-semibold">
+                                    #@payment.PaymentTransactionId
+                                </div>
+
+                                <div class="cs-muted small">
+                                    Txn No: @DisplayText(payment.VnpTransactionNo)
+                                </div>
+                            </td>
+
+                            <td>
+                                <div class="fw-semibold">
+                                    #@payment.OrderId
+                                </div>
+
+                                @if (payment.Order != null)
+                                {
+                                    <div class="cs-muted small">
+                                        @payment.Order.Status / @payment.Order.PaymentStatus
+                                    </div>
+                                }
+                            </td>
+
+                            <td>
+                                @if (payment.User == null)
+                                {
+                                    <span class="cs-muted">
+                                        -
+                                    </span>
+                                }
+                                else
+                                {
+                                    <div class="fw-semibold">
+                                        @payment.User.Username
+                                    </div>
+
+                                    <div class="cs-muted small">
+                                        @DisplayText(payment.User.Email)
+                                    </div>
+                                }
+                            </td>
+
+                            <td>
+                                @DisplayText(payment.PaymentMethod)
+                            </td>
+
+                            <td>
+                                <span class="@GetPaymentStatusClass(payment.TransactionStatus)">
+                                    @DisplayText(payment.TransactionStatus)
+                                </span>
+                            </td>
+
+                            <td>
+                                @DisplayText(payment.VnpBankCode)
+                            </td>
+
+                            <td>
+                                <div>
+                                    @DisplayText(payment.VnpTxnRef)
+                                </div>
+
+                                <div class="cs-muted small">
+                                    Resp: @DisplayText(payment.VnpResponseCode)
+                                </div>
+                            </td>
+
+                            <td class="text-end fw-semibold">
+                                @FormatCurrency(payment.Amount)
+                            </td>
+
+                            <td>
+                                <div>
+                                    @FormatDate(payment.CreatedAt)
+                                </div>
+
+                                <div class="cs-muted small">
+                                    Paid: @FormatDate(payment.PaidAt)
+                                </div>
+                            </td>
+
+                            <td class="text-end">
+                                <button type="button"
+                                        class="btn cs-btn-detail btn-sm"
+                                        @onclick="() => GoToOrder(payment.OrderId)">
+                                    View Order
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    private string Keyword { get; set; } = string.Empty;
+
+    private string SelectedTransactionStatus { get; set; } = string.Empty;
+
+    private string SelectedPaymentMethod { get; set; } = string.Empty;
+
+    private string SelectedBankCode { get; set; } = string.Empty;
+
+    private List<string> TransactionStatuses =>
+        AdminPaymentStateService.Payments
+            .Select(payment => payment.TransactionStatus)
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(value => value)
+            .ToList();
+
+    private List<string> PaymentMethods =>
+        AdminPaymentStateService.Payments
+            .Select(payment => payment.PaymentMethod)
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(value => value)
+            .ToList();
+
+    private List<string> BankCodes =>
+        AdminPaymentStateService.Payments
+            .Select(payment => payment.VnpBankCode)
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .Select(value => value!)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(value => value)
+            .ToList();
+
+    private List<AdminPaymentResponseDTO> FilteredPayments
+    {
+        get
+        {
+            IEnumerable<AdminPaymentResponseDTO> query = AdminPaymentStateService.Payments;
+
+            if (!string.IsNullOrWhiteSpace(Keyword))
+            {
+                var keyword = Keyword.Trim();
+
+                query = query.Where(payment =>
+                    payment.PaymentTransactionId.ToString().Contains(
+                        keyword,
+                        StringComparison.OrdinalIgnoreCase
+                    ) ||
+                    payment.OrderId.ToString().Contains(
+                        keyword,
+                        StringComparison.OrdinalIgnoreCase
+                    ) ||
+                    TextContains(payment.PaymentMethod, keyword) ||
+                    TextContains(payment.TransactionStatus, keyword) ||
+                    TextContains(payment.VnpTxnRef, keyword) ||
+                    TextContains(payment.VnpTransactionNo, keyword) ||
+                    TextContains(payment.VnpResponseCode, keyword) ||
+                    TextContains(payment.VnpBankCode, keyword) ||
+                    TextContains(payment.User?.Username, keyword) ||
+                    TextContains(payment.User?.Email, keyword)
+                );
+            }
+
+            if (!string.IsNullOrWhiteSpace(SelectedTransactionStatus))
+            {
+                query = query.Where(payment =>
+                    string.Equals(
+                        payment.TransactionStatus,
+                        SelectedTransactionStatus,
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                );
+            }
+
+            if (!string.IsNullOrWhiteSpace(SelectedPaymentMethod))
+            {
+                query = query.Where(payment =>
+                    string.Equals(
+                        payment.PaymentMethod,
+                        SelectedPaymentMethod,
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                );
+            }
+
+            if (!string.IsNullOrWhiteSpace(SelectedBankCode))
+            {
+                query = query.Where(payment =>
+                    string.Equals(
+                        payment.VnpBankCode,
+                        SelectedBankCode,
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                );
+            }
+
+            return query
+                .OrderByDescending(payment => payment.CreatedAt)
+                .ToList();
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        AdminPaymentStateService.OnChange += HandlePaymentStateChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await AdminPaymentStateService.LoadPaymentsAsync();
+        }
+    }
+
+    private void HandlePaymentStateChanged()
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private async Task ReloadPayments()
+    {
+        await AdminPaymentStateService.LoadPaymentsAsync();
+    }
+
+    private void GoToOrder(int orderId)
+    {
+        NavigationManager.NavigateTo($"/admin/orders/{orderId}");
+    }
+
+    private static string FormatCurrency(decimal amount)
+    {
+        return amount.ToString("#,##0") + "đ";
+    }
+
+    private static string FormatDate(DateTime? value)
+    {
+        if (value == null)
+        {
+            return "-";
+        }
+
+        return value.Value.ToString("dd/MM/yyyy HH:mm");
+    }
+
+    private static string DisplayText(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return "-";
+        }
+
+        return value;
+    }
+
+    private static bool TextContains(string? value, string keyword)
+    {
+        return !string.IsNullOrWhiteSpace(value) &&
+            value.Contains(keyword, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string GetPaymentStatusClass(string? status)
+    {
+        return status?.ToLowerInvariant() switch
+        {
+            "succeeded" => "badge cs-status-badge cs-status-success",
+            "success" => "badge cs-status-badge cs-status-success",
+            "paid" => "badge cs-status-badge cs-status-success",
+            "failed" => "badge cs-status-badge cs-status-danger",
+            "fail" => "badge cs-status-badge cs-status-danger",
+            "cancelled" => "badge cs-status-badge cs-status-danger",
+            "pending" => "badge cs-status-badge cs-status-warning",
+            _ => "badge cs-status-badge"
+        };
+    }
+
+    public void Dispose()
+    {
+        AdminPaymentStateService.OnChange -= HandlePaymentStateChanged;
+    }
+}
