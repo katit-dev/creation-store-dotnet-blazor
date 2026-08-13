@@ -1,0 +1,323 @@
+@page "/admin/profile"
+@layout AdminLayout
+
+@using CreationStore.Blazor.DTOs.Auth
+@using CreationStore.Blazor.Services
+
+@inject UserStateService UserStateService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Admin Profile</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1">
+            Admin Profile
+        </h2>
+
+        <p class="cs-muted mb-0">
+            View and update your administrator account information.
+        </p>
+    </div>
+
+    <button type="button"
+            class="btn cs-btn-outline"
+            @onclick="GoToDashboard">
+        Back to Dashboard
+    </button>
+</div>
+
+@if (IsLoading)
+{
+    <div class="cs-card p-5 text-center">
+        <div class="spinner-border text-light mb-3"></div>
+
+        <p class="cs-muted mb-0">
+            Loading profile...
+        </p>
+    </div>
+}
+else if (UserStateService.CurrentUser == null)
+{
+    <div class="alert alert-danger">
+        Profile information could not be loaded.
+    </div>
+}
+else
+{
+    <div class="row g-4">
+        <div class="col-12 col-xl-4">
+            <div class="cs-card p-4 h-100 text-center">
+                <div class="cs-account-avatar mx-auto mb-3">
+                    @GetAvatarText()
+                </div>
+
+                <h4 class="fw-bold mb-1">
+                    @UserStateService.CurrentUser.Username
+                </h4>
+
+                <p class="cs-muted mb-3">
+                    Administrator
+                </p>
+
+                <div class="d-flex flex-wrap justify-content-center gap-2">
+                    @foreach (string role in UserStateService.CurrentUser.Roles)
+                    {
+                        <span class="badge cs-status-badge cs-status-success">
+                            @role
+                        </span>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-xl-8">
+            <div class="cs-card p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h4 class="fw-bold mb-1">
+                            Account Information
+                        </h4>
+
+                        <p class="cs-muted mb-0">
+                            Manage your profile details.
+                        </p>
+                    </div>
+
+                    @if (!IsEditMode)
+                    {
+                        <button type="button"
+                                class="btn cs-btn-cart"
+                                @onclick="EnableEditMode">
+                            Edit Profile
+                        </button>
+                    }
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(SuccessMessage))
+                {
+                    <div class="alert alert-success">
+                        @SuccessMessage
+                    </div>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+                {
+                    <div class="alert alert-danger">
+                        @ErrorMessage
+                    </div>
+                }
+
+                <EditForm Model="ProfileForm"
+                          OnValidSubmit="SaveProfileAsync">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">
+                                Username
+                            </label>
+
+                            <input class="form-control cs-input"
+                                   value="@UserStateService.CurrentUser.Username"
+                                   disabled />
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label">
+                                Full Name
+                            </label>
+
+                            <InputText class="form-control cs-input"
+                                       @bind-Value="ProfileForm.FullName"
+                                       disabled="@(!IsEditMode)" />
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label class="form-label">
+                                Email
+                            </label>
+
+                            <InputText class="form-control cs-input"
+                                       @bind-Value="ProfileForm.Email"
+                                       disabled="@(!IsEditMode)" />
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label class="form-label">
+                                Phone
+                            </label>
+
+                            <InputText class="form-control cs-input"
+                                       @bind-Value="ProfileForm.Phone"
+                                       disabled="@(!IsEditMode)" />
+                        </div>
+                    </div>
+
+                    @if (IsEditMode)
+                    {
+                        <div class="d-flex gap-2 mt-4">
+                            <button type="submit"
+                                    class="btn cs-btn-cart"
+                                    disabled="@IsSaving">
+                                @if (IsSaving)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2"></span>
+                                    <span>Saving...</span>
+                                }
+                                else
+                                {
+                                    <span>Save Changes</span>
+                                }
+                            </button>
+
+                            <button type="button"
+                                    class="btn cs-btn-outline"
+                                    disabled="@IsSaving"
+                                    @onclick="CancelEditMode">
+                                Cancel
+                            </button>
+                        </div>
+                    }
+                </EditForm>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private UpdateProfileDTO ProfileForm { get; set; } = new();
+
+    private bool IsLoading { get; set; } = true;
+
+    private bool IsEditMode { get; set; }
+
+    private bool IsSaving { get; set; }
+
+    private string? SuccessMessage { get; set; }
+
+    private string? ErrorMessage { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadProfileAsync();
+        }
+    }
+
+    private async Task LoadProfileAsync()
+    {
+        IsLoading = true;
+        ErrorMessage = null;
+        SuccessMessage = null;
+
+        try
+        {
+            await UserStateService.GetProfileAsync();
+
+            if (!UserStateService.IsAuthenticated)
+            {
+                NavigationManager.NavigateTo("/login");
+                return;
+            }
+
+            if (!UserStateService.IsAdmin)
+            {
+                NavigationManager.NavigateTo("/access-denied");
+                return;
+            }
+
+            FillProfileForm();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            IsLoading = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void EnableEditMode()
+    {
+        SuccessMessage = null;
+        ErrorMessage = null;
+
+        FillProfileForm();
+
+        IsEditMode = true;
+    }
+
+    private void CancelEditMode()
+    {
+        SuccessMessage = null;
+        ErrorMessage = null;
+
+        FillProfileForm();
+
+        IsEditMode = false;
+    }
+
+    private async Task SaveProfileAsync()
+    {
+        IsSaving = true;
+        SuccessMessage = null;
+        ErrorMessage = null;
+
+        try
+        {
+            await UserStateService.UpdateProfileAsync(ProfileForm);
+
+            FillProfileForm();
+
+            IsEditMode = false;
+            SuccessMessage = "Profile updated successfully.";
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            IsSaving = false;
+        }
+    }
+
+    private void FillProfileForm()
+    {
+        var user = UserStateService.CurrentUser;
+
+        if (user == null)
+        {
+            return;
+        }
+
+        ProfileForm = new UpdateProfileDTO
+        {
+            FullName = user.FullName,
+            Email = user.Email,
+            Phone = user.Phone
+        };
+    }
+
+    private void GoToDashboard()
+    {
+        NavigationManager.NavigateTo("/admin/dashboard");
+    }
+
+    private string GetAvatarText()
+    {
+        var username = UserStateService.CurrentUser?.Username;
+
+        if (string.IsNullOrWhiteSpace(username))
+        {
+            return "A";
+        }
+
+        return username.Trim()[0].ToString().ToUpper();
+    }
+}
