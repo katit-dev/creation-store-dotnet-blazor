@@ -558,3 +558,19 @@ header a:hover {
     border: 1px solid #2B2224 !important;
     opacity: 1 !important;
 }
+
+/* =========================
+    admin product
+========================= */
+.admin-product-search {
+    min-width: 280px;
+}
+
+.admin-product-thumb {
+    width: 74px;
+    height: 48px;
+    border-radius: 10px;
+    object-fit: cover;
+    background: #1A1516;
+    border: 1px solid #2B2224;
+}
