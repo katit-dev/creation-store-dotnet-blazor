@@ -574,3 +574,42 @@ header a:hover {
     background: #1A1516;
     border: 1px solid #2B2224;
 }
+
+/* =========================
+    fix create product (admin)
+========================= */
+.cs-validation-box {
+    background: rgba(255, 87, 120, 0.12);
+    border: 1px solid rgba(255, 111, 142, 0.45);
+    color: #FFD9E2;
+    border-radius: 12px;
+    padding: 0.9rem 1rem;
+    margin-bottom: 1.25rem;
+    box-shadow: 0 0 18px rgba(201, 74, 104, 0.12);
+}
+
+.cs-validation-title {
+    font-weight: 700;
+    margin-bottom: 0.45rem;
+    color: #FFB6C8;
+}
+
+.cs-validation-box ul {
+    margin: 0;
+    padding-left: 1.2rem;
+}
+
+.cs-validation-box li {
+    margin-bottom: 0.25rem;
+}
+
+.validation-message {
+    color: #FF9CAF !important;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-top: 0.4rem;
+}
+
+.validation-errors {
+    color: #FFD9E2 !important;
+}
