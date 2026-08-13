@@ -523,3 +523,20 @@ header a:hover {
     height: 52px;
     font-size: 1.1rem;
 }
+
+/* =========================
+   admin profile
+========================= */
+.cs-admin-logout-btn {
+    border: 1px solid #753041 !important;
+    color: #FFD9E2 !important;
+    background: transparent !important;
+    border-radius: 10px;
+    padding: 0.55rem 0.9rem;
+    font-weight: 700;
+}
+
+.cs-admin-logout-btn:hover {
+    background: #753041 !important;
+    color: #FFFFFF !important;
+}
