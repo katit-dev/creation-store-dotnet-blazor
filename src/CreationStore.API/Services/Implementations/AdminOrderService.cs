@@ -109,15 +109,22 @@ namespace CreationStore.API.Services.Implementations
                 };
             }
 
-            if (
-                order.Status != COrderStatus.Paid ||
-                order.PaymentStatus != CPaymentStatus.Succeeded
-            )
+            if (order.Status != COrderStatus.Paid)
             {
                 return new ResponseTypeDTO<AdminOrderResponseDTO>
                 {
                     StatusCode = 400,
                     Message = "Only paid orders can be completed",
+                    Content = null
+                };
+            }
+
+            if (order.PaymentStatus != CPaymentStatus.Succeeded)
+            {
+                return new ResponseTypeDTO<AdminOrderResponseDTO>
+                {
+                    StatusCode = 400,
+                    Message = "Only succeeded payment orders can be completed",
                     Content = null
                 };
             }
@@ -173,15 +180,22 @@ namespace CreationStore.API.Services.Implementations
                 };
             }
 
-            if (
-                order.Status == COrderStatus.Paid ||
-                order.PaymentStatus == CPaymentStatus.Succeeded
-            )
+            if (order.PaymentStatus == CPaymentStatus.Succeeded)
             {
                 return new ResponseTypeDTO<AdminOrderResponseDTO>
                 {
                     StatusCode = 400,
                     Message = "Paid order cannot be cancelled because refund is not supported",
+                    Content = null
+                };
+            }
+
+            if (order.Status != COrderStatus.PendingPayment)
+            {
+                return new ResponseTypeDTO<AdminOrderResponseDTO>
+                {
+                    StatusCode = 400,
+                    Message = "Only pending payment orders can be cancelled",
                     Content = null
                 };
             }
