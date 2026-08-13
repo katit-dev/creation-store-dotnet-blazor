@@ -30,6 +30,7 @@ builder.Services.AddScoped<OrderStateService>();
 builder.Services.AddScoped<AdminDashboardStateService>();
 builder.Services.AddScoped<AdminProductStateService>();
 builder.Services.AddScoped<AdminCategoryStateService>();
+builder.Services.AddScoped<AdminOrderStateService>();
 
 var app = builder.Build();
 
