@@ -60,9 +60,9 @@
 | `name` | `varchar(255)` | Yes | `NULL` | Tên sản phẩm |
 | `short_name` | `varchar(255)` | Yes | `NULL` | Tên ngắn / subtitle |
 | `description` | `text` | Yes | `NULL` | Mô tả |
-| `ingredients` | `text / jsonb` | Yes | `NULL` | TBD - cần lead chốt |
-| `benefits` | `text / jsonb` | Yes | `NULL` | TBD - cần lead chốt |
-| `usage_instructions` | `text / jsonb` | Yes | `NULL` | TBD - cần lead chốt |
+| `ingredients` | `text / jsonb` | Yes | `NULL` | Chưa chốt data type - cần lead xác nhận |
+| `benefits` | `text / jsonb` | Yes | `NULL` | Chưa chốt data type - cần lead xác nhận |
+| `usage_instructions` | `text / jsonb` | Yes | `NULL` | Chưa chốt data type - cần lead xác nhận |
 | `status` | `enum` | Yes | `draft` | `draft / published / archived` |
 | `created_at` | `timestamptz` | Yes | `NULL` | Audit |
 | `updated_at` | `timestamptz` | Yes | `NULL` | Audit |
@@ -434,34 +434,9 @@
 | Campaign ownership | Đề xuất 1 Campaign thuộc 1 Site | Có campaign cross-site không? | Cần lead xác nhận |
 | FlashSaleItem status | Đề xuất `active/inactive` | Có cần lifecycle item riêng không? | Cần lead xác nhận |
 | Campaign overlap | Đề xuất không cho cùng Site + SKU overlap | Policy cuối cùng là gì? | Cần lead xác nhận |
-| NULL / empty / inherit | Chưa chốt semantics | `NULL=inherit? empty=explicit blank?` | Cần lead xác nhận |
+| Per-site content override semantics | Hiện chưa thiết kế content override theo website | Nếu sau này có override: cần chốt `NULL = inherit`, empty string = explicit blank | Cần lead xác nhận |
 | SkinConcern | Tách riêng Category; N-N qua `ProductSkinConcern` | - | Đã chốt |
 | Pricing | Website + SKU qua `ProductSiteSku` | - | Đã chốt |
 | Flash Sale scope | SKU-level | - | Đã chốt |
 
 ---
-
-## 6. Next Step - products-schema.dbml
-
-Sau khi lead duyệt:
-
-- Table Definitions
-- Website Field Mapping
-- Example Data
-- Business Rule Matrix
-- Assumptions / Lead Decisions
-
-thì mới khóa constraint cuối và tạo:
-
-```text
-docs/products-schema.dbml
-```
-
-DBML phải:
-
-- import được vào dbdiagram;
-- đủ PK/FK/unique/index/check/ref;
-- tái sử dụng `cms_sites`;
-- không kéo các module ngoài scope như cart/order/inventory/review.
-
-> Các mục đánh dấu **Cần lead xác nhận** chưa nên coi là schema đã chốt.
